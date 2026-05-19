@@ -8,6 +8,11 @@ from app.services.kubernetes_service import (
 router = APIRouter()
 
 
+@router.get("/")
+def home():
+    return {"message": "AI DevOps Copilot Backend Running"}
+
+
 @router.get("/health")
 def health_check():
     return {"status": "healthy"}
@@ -15,15 +20,9 @@ def health_check():
 
 @router.get("/pods")
 def get_pods():
-
-    pods = get_all_pods()
-
-    return pods
+    return get_all_pods()
 
 
 @router.get("/analyze")
 def analyze_cluster():
-
-    issues = analyze_cluster_issues()
-
-    return issues
+    return analyze_cluster_issues()

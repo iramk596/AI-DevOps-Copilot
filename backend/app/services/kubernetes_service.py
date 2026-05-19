@@ -7,19 +7,41 @@ def get_all_pods():
 
     v1 = client.CoreV1Api()
 
-    pod_list = v1.list_pod_for_all_namespaces(watch=False)
+    pods = v1.list_pod_for_all_namespaces(watch=False)
 
-    pods = []
+    pod_list = []
 
-    for pod in pod_list.items:
+    for pod in pods.items:
 
-        pods.append({
+        pod_list.append({
             "name": pod.metadata.name,
             "namespace": pod.metadata.namespace,
             "status": pod.status.phase
         })
 
-    return pods
+    return pod_list
+
+
+def get_pod_logs(namespace, pod_name):
+
+    config.load_kube_config()
+
+    v1 = client.CoreV1Api()
+
+    try:
+
+        logs = v1.read_namespaced_pod_log(
+            name=pod_name,
+            namespace=namespace,
+            tail_lines=20,
+            previous=True
+        )
+
+        return logs
+
+    except Exception as e:
+
+        return str(e)
 
 
 def analyze_cluster_issues():
@@ -28,33 +50,64 @@ def analyze_cluster_issues():
 
     v1 = client.CoreV1Api()
 
-    pod_list = v1.list_pod_for_all_namespaces(watch=False)
+    pods = v1.list_pod_for_all_namespaces(watch=False)
 
     issues = []
 
-    for pod in pod_list.items:
+    for pod in pods.items:
 
         pod_name = pod.metadata.name
+
         namespace = pod.metadata.namespace
 
-        if pod.status.container_statuses:
+        container_statuses = pod.status.container_statuses
 
-            for container in pod.status.container_statuses:
+        if not container_statuses:
+            continue
 
-                waiting_state = container.state.waiting
+        for container in container_statuses:
 
-                if waiting_state:
+            reason = None
 
-                    reason = waiting_state.reason
+            if container.state.waiting:
+                reason = container.state.waiting.reason
 
-                    if reason == "CrashLoopBackOff":
+            elif container.state.terminated:
+                reason = "Error"
 
-                        issues.append({
-                            "pod": pod_name,
-                            "namespace": namespace,
-                            "status": reason,
-                            "possible_reason": "Container is crashing repeatedly",
-                            "suggestion": "Check application logs and startup command"
-                        })
+            if reason in ["CrashLoopBackOff", "Error"]:
+
+                logs = get_pod_logs(namespace, pod_name)
+
+                possible_reason = "Unknown issue"
+
+                suggestion = "Check logs manually"
+
+                if "exit" in logs.lower():
+
+                    possible_reason = "Application exited unexpectedly"
+
+                    suggestion = "Check application startup logic"
+
+                elif "error" in logs.lower():
+
+                    possible_reason = "Application runtime error"
+
+                    suggestion = "Inspect stack trace in logs"
+
+                elif "failed" in logs.lower():
+
+                    possible_reason = "Application failed during startup"
+
+                    suggestion = "Check startup configuration"
+
+                issues.append({
+                    "pod": pod_name,
+                    "namespace": namespace,
+                    "status": reason,
+                    "logs": logs,
+                    "possible_reason": possible_reason,
+                    "suggestion": suggestion
+                })
 
     return issues
