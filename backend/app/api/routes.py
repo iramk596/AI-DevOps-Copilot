@@ -1,5 +1,8 @@
 from fastapi import APIRouter
 
+from app.services.queue_service import incident_queue
+from app.services.incident_service import process_incident
+
 from app.services.kubernetes_service import (
     get_all_pods,
     analyze_cluster_issues
@@ -38,3 +41,17 @@ def analyze_cluster():
         issue["ai_analysis"] = ai_response
 
     return issues
+
+
+@router.post("/incident")
+def create_incident(payload: dict):
+
+    job = incident_queue.enqueue(
+        process_incident,
+        payload
+    )
+
+    return {
+        "message": "Incident queued successfully",
+        "job_id": job.id
+    }
