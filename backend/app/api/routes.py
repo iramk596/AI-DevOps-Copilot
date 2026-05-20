@@ -5,7 +5,8 @@ from app.services.incident_service import process_incident
 
 from app.services.kubernetes_service import (
     get_all_pods,
-    analyze_cluster_issues
+    analyze_cluster_issues,
+    get_pod_logs
 )
 
 from app.services.openai_service import analyze_logs_with_ai
@@ -41,6 +42,21 @@ def analyze_cluster():
         issue["ai_analysis"] = ai_response
 
     return issues
+
+
+@router.get("/logs/{namespace}/{pod_name}")
+def pod_logs(namespace: str, pod_name: str):
+
+    logs = get_pod_logs(
+        namespace,
+        pod_name
+    )
+
+    return {
+        "pod": pod_name,
+        "namespace": namespace,
+        "logs": logs
+    }
 
 
 @router.post("/incident")
