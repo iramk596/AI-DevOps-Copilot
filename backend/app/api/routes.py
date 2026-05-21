@@ -31,17 +31,31 @@ def get_pods():
 @router.get("/analyze")
 def analyze_cluster():
 
-    issues = analyze_cluster_issues()
+    try:
 
-    for issue in issues:
+        issues = analyze_cluster_issues()
 
-        ai_response = analyze_logs_with_ai(
-            issue["logs"]
-        )
+        for issue in issues:
 
-        issue["ai_analysis"] = ai_response
+            print("Sending logs to AI...")
 
-    return issues
+            ai_response = analyze_logs_with_ai(
+                issue["logs"]
+            )
+
+            print("AI RESPONSE:", ai_response)
+
+            issue["ai_analysis"] = ai_response
+
+        return issues
+
+    except Exception as e:
+
+        print("ANALYZE ERROR:", str(e))
+
+        return {
+            "error": str(e)
+        }
 
 
 @router.get("/logs/{namespace}/{pod_name}")
