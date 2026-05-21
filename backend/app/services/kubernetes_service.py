@@ -1,19 +1,20 @@
 from kubernetes import client, config
 
-# Load kube config once
-config.load_kube_config()
 
-# Initialize Kubernetes API client once
-v1 = client.CoreV1Api()
+def get_k8s_client():
+
+    """
+    Load fresh Kubernetes config every time
+    """
+
+    config.load_kube_config()
+
+    return client.CoreV1Api()
 
 
 def get_all_pods(namespace=None):
 
-    """
-    Get all pods.
-    If namespace is provided -> fetch only that namespace.
-    Otherwise fetch all namespaces.
-    """
+    v1 = get_k8s_client()
 
     if namespace:
         pods = v1.list_namespaced_pod(namespace)
@@ -35,9 +36,7 @@ def get_all_pods(namespace=None):
 
 def get_pod_logs(namespace, pod_name, tail_lines=50):
 
-    """
-    Fetch logs from a pod
-    """
+    v1 = get_k8s_client()
 
     try:
 
@@ -57,9 +56,7 @@ def get_pod_logs(namespace, pod_name, tail_lines=50):
 
 def analyze_cluster_issues(namespace=None):
 
-    """
-    Detect problematic pods and analyze logs
-    """
+    v1 = get_k8s_client()
 
     if namespace:
         pods = v1.list_namespaced_pod(namespace)
@@ -83,11 +80,9 @@ def analyze_cluster_issues(namespace=None):
 
             reason = None
 
-            # Waiting state
             if container.state.waiting:
                 reason = container.state.waiting.reason
 
-            # Terminated state
             elif container.state.terminated:
                 reason = "Error"
 
@@ -98,51 +93,12 @@ def analyze_cluster_issues(namespace=None):
                     pod_name
                 )
 
-                # Simple AI-like rule analysis
-                possible_reason = "Unknown issue"
-
-                suggestion = "Check logs manually"
-
-                log_text = logs.lower()
-
-                if "exit" in log_text:
-
-                    possible_reason = "Application exited unexpectedly"
-
-                    suggestion = "Check application startup logic"
-
-                elif "error" in log_text:
-
-                    possible_reason = "Application runtime error"
-
-                    suggestion = "Inspect stack trace in logs"
-
-                elif "failed" in log_text:
-
-                    possible_reason = "Application failed during startup"
-
-                    suggestion = "Check startup configuration"
-
-                elif "connection refused" in log_text:
-
-                    possible_reason = "Service dependency unavailable"
-
-                    suggestion = "Check database/service connectivity"
-
-                elif "oomkilled" in log_text:
-
-                    possible_reason = "Container ran out of memory"
-
-                    suggestion = "Increase memory limits"
-
                 issues.append({
                     "pod": pod_name,
                     "namespace": pod_namespace,
                     "status": reason,
                     "phase": pod_phase,
-                    "logs": logs,
-                    "possible_reason": possible_reason,
-                    "suggestion": suggestion
+                    "logs": logs
                 })
 
     return issues
