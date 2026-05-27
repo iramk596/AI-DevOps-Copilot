@@ -1,13 +1,14 @@
 from kubernetes import client, config
 
+# Load kube config
+config.load_kube_config()
+
 
 def get_k8s_client():
 
     """
-    Load fresh Kubernetes config every time
+    Create fresh Kubernetes client
     """
-
-    config.load_kube_config()
 
     return client.CoreV1Api()
 
@@ -80,25 +81,75 @@ def analyze_cluster_issues(namespace=None):
 
             reason = None
 
+            # Waiting state
             if container.state.waiting:
                 reason = container.state.waiting.reason
 
+            # Terminated state
             elif container.state.terminated:
-                reason = "Error"
+                reason = container.state.terminated.reason or "Error"
 
-            if reason in ["CrashLoopBackOff", "Error"]:
+            # Failed pod phase
+            if pod_phase == "Failed":
+                reason = "Failed"
+
+            # Detect problematic pods
+            if reason in [
+                "CrashLoopBackOff",
+                "Error",
+                "Failed",
+                "OOMKilled",
+                "ContainerCannotRun"
+            ]:
 
                 logs = get_pod_logs(
                     pod_namespace,
                     pod_name
                 )
 
+                possible_reason = "Unknown issue"
+                suggestion = "Check logs manually"
+
+                log_text = logs.lower()
+
+                if "exit" in log_text:
+
+                    possible_reason = "Application exited unexpectedly"
+
+                    suggestion = "Check application startup logic"
+
+                elif "error" in log_text:
+
+                    possible_reason = "Application runtime error"
+
+                    suggestion = "Inspect stack trace in logs"
+
+                elif "failed" in log_text:
+
+                    possible_reason = "Application failed during startup"
+
+                    suggestion = "Check startup configuration"
+
+                elif "connection refused" in log_text:
+
+                    possible_reason = "Service dependency unavailable"
+
+                    suggestion = "Check database/service connectivity"
+
+                elif "oomkilled" in log_text:
+
+                    possible_reason = "Container ran out of memory"
+
+                    suggestion = "Increase memory limits"
+
                 issues.append({
                     "pod": pod_name,
                     "namespace": pod_namespace,
                     "status": reason,
                     "phase": pod_phase,
-                    "logs": logs
+                    "logs": logs,
+                    "possible_reason": possible_reason,
+                    "suggestion": suggestion
                 })
 
     return issues
