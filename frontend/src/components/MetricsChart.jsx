@@ -1,4 +1,6 @@
 import {
+import { useEffect } from 'react'
+function MetricsChart({ title, data, dataKey, color, livePoint }) {
   LineChart,
   Line,
   XAxis,
@@ -16,14 +18,17 @@ function MetricsChart({ title, data, dataKey, color }) {
 
       <h2 className="text-2xl font-bold text-cyan-300 mb-6">
         {title}
-      </h2>
-
-      <ResponsiveContainer width="100%" height={300}>
-
-        <LineChart data={data}>
-
+          <Line
+            type="monotone"
+            dataKey={dataKey}
+            stroke={color}
+            strokeWidth={3}
+          />
           <CartesianGrid
             strokeDasharray="3 3"
+      {livePoint && (
+        <div className="mt-3 text-sm text-gray-400">Live: {livePoint}</div>
+      )}
             stroke="#333"
           />
 

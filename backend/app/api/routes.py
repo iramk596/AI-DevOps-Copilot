@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from kubernetes import client
 from typing import List
 
@@ -11,6 +11,10 @@ from app.services.kubernetes_service import (
     analyze_cluster_issues,
     get_pod_logs
 )
+
+from fastapi import WebSocket, WebSocketDisconnect
+import asyncio
+from app.services.websocket_manager import manager
 
 from app.services.openai_service import analyze_logs_with_ai
 
@@ -41,12 +45,29 @@ def get_pods():
 
 
 @router.get("/analyze")
-def analyze_cluster() -> List[IncidentIssue]:
+def analyze_cluster(request: Request) -> List[IncidentIssue]:
     """
     Analyze Kubernetes cluster for failed pods.
     Returns list of incidents with AI analysis.
     """
     try:
+
+        # Dev-only mock response: return a static incident when ?mock=true
+        if request.query_params.get("mock") == "true":
+            return [
+                {
+                    "pod": "mock-crash-app",
+                    "namespace": "default",
+                    "status": "CrashLoopBackOff",
+                    "phase": "Running",
+                    "possible_reason": "Application failed during startup",
+                    "suggestion": "Check startup configuration",
+                    "logs": "Application failed to start\n",
+                    "container": None,
+                    "timestamp": None,
+                    "ai_analysis": "Mock analysis: application failed to start."
+                }
+            ]
 
         issues = analyze_cluster_issues()
 
@@ -165,3 +186,69 @@ def create_incident(payload: dict):
             status_code=500,
             detail=f"Failed to queue incident: {str(e)}"
         )
+
+
+# WebSocket endpoint for live cluster updates
+@router.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+
+    await manager.connect(websocket)
+
+    try:
+        # keep the connection open; clients may send pings
+        while True:
+            try:
+                msg = await websocket.receive_text()
+                # optional: handle client pings or commands
+                if msg == "ping":
+                    await websocket.send_text("pong")
+            except WebSocketDisconnect:
+                break
+
+    finally:
+        await manager.disconnect(websocket)
+
+
+# WebSocket endpoint for streaming pod logs
+@router.websocket("/ws/logs/{namespace}/{pod_name}")
+async def logs_websocket(websocket: WebSocket, namespace: str, pod_name: str):
+    await websocket.accept()
+
+    queue = asyncio.Queue()
+    loop = asyncio.get_running_loop()
+
+    def producer():
+        try:
+            for line in stream_pod_logs(namespace, pod_name, tail_lines=10):
+                loop.call_soon_threadsafe(queue.put_nowait, line)
+        except Exception as e:
+            loop.call_soon_threadsafe(queue.put_nowait, f"__STREAM_ERROR__:{e}")
+        finally:
+            loop.call_soon_threadsafe(queue.put_nowait, None)
+
+    prod_task = asyncio.to_thread(producer)
+
+    try:
+        while True:
+            line = await queue.get()
+            if line is None:
+                break
+            if isinstance(line, str) and line.startswith("__STREAM_ERROR__:"):
+                try:
+                    await websocket.send_text(line.replace("__STREAM_ERROR__:", "Error streaming logs: "))
+                except Exception:
+                    pass
+                break
+
+            try:
+                await websocket.send_text(line)
+            except WebSocketDisconnect:
+                break
+
+    except WebSocketDisconnect:
+        return
+    finally:
+        try:
+            prod_task.cancel()
+        except Exception:
+            pass
