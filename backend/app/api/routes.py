@@ -1,3 +1,5 @@
+import time
+
 from fastapi import APIRouter, HTTPException, Request
 from kubernetes import client
 from typing import List
@@ -9,7 +11,10 @@ from app.models.incident import IncidentIssue
 from app.services.kubernetes_service import (
     get_all_pods,
     analyze_cluster_issues,
-    get_pod_logs
+    get_cluster_metrics,
+    get_k8s_client,
+    get_pod_logs,
+    stream_pod_logs,
 )
 
 from fastapi import WebSocket, WebSocketDisconnect
@@ -120,6 +125,23 @@ def pod_logs(namespace: str, pod_name: str):
         )
 
 
+@router.get("/logs/health")
+def logs_health_check():
+    """Simple health check for Kubernetes log streaming readiness."""
+    try:
+        v1 = get_k8s_client()
+        v1.list_namespace(limit=1)
+        return {
+            "status": "healthy",
+            "message": "Kubernetes log streaming backend is available.",
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Logs health check failed: {str(e)}"
+        )
+
+
 @router.post("/restart-pod/{namespace}/{pod_name}")
 def restart_pod(namespace: str, pod_name: str):
 
@@ -188,6 +210,29 @@ def create_incident(payload: dict):
         )
 
 
+def build_cluster_payload():
+    pods = get_all_pods()
+    issues = analyze_cluster_issues()
+
+    failed = sum(1 for p in pods if p.get("status") != "Running")
+    running = sum(1 for p in pods if p.get("status") == "Running")
+    cluster_health = "degraded" if failed > 0 else "healthy"
+    incident_count = len(issues)
+
+    metrics = get_cluster_metrics()
+
+    return {
+        "type": "cluster_update",
+        "timestamp": int(time.time()),
+        "failed_pod_count": failed,
+        "running_pod_count": running,
+        "cluster_health": cluster_health,
+        "incident_count": incident_count,
+        "incidents": issues,
+        "metrics": metrics,
+    }
+
+
 # WebSocket endpoint for live cluster updates
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -195,6 +240,12 @@ async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
 
     try:
+        try:
+            initial_payload = build_cluster_payload()
+            await websocket.send_json(initial_payload)
+        except Exception:
+            pass
+
         # keep the connection open; clients may send pings
         while True:
             try:

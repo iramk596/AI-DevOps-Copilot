@@ -1,41 +1,34 @@
-import asyncio
-from typing import List
 from fastapi import WebSocket
+import logging
 
+logger = logging.getLogger(__name__)
 
-class WebsocketManager:
+class ConnectionManager:
     def __init__(self):
-        self.active_connections: List[WebSocket] = []
-        self.lock = asyncio.Lock()
+        self.active_connections = []
         self.seen_incidents = set()
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
-        async with self.lock:
-            self.active_connections.append(websocket)
+        self.active_connections.append(websocket)
+        logger.info(f"WebSocket client connected. Total connections: {len(self.active_connections)}")
 
     async def disconnect(self, websocket: WebSocket):
-        async with self.lock:
-            if websocket in self.active_connections:
-                self.active_connections.remove(websocket)
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
+        logger.info(f"WebSocket client disconnected. Total connections: {len(self.active_connections)}")
 
-    async def broadcast(self, message: dict):
-        # send JSON message to all active connections
-        dead = []
-        async with self.lock:
-            conns = list(self.active_connections)
+    async def broadcast(self, data):
+        disconnected = []
 
-        for conn in conns:
+        for connection in list(self.active_connections):
             try:
-                await conn.send_json(message)
-            except Exception:
-                dead.append(conn)
+                await connection.send_json(data)
+            except Exception as exc:
+                logger.warning(f"Removing disconnected WebSocket: {exc}")
+                disconnected.append(connection)
 
-        if dead:
-            async with self.lock:
-                for d in dead:
-                    if d in self.active_connections:
-                        self.active_connections.remove(d)
+        for connection in disconnected:
+            await self.disconnect(connection)
 
-
-manager = WebsocketManager()
+manager = ConnectionManager()
