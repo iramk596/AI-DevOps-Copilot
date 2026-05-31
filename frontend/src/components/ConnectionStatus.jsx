@@ -5,6 +5,9 @@ function ConnectionStatus({ status }) {
   if (status === 'connected') {
     dotClass = 'bg-green-400'
     text = 'Connected'
+  } else if (status === 'connecting') {
+    dotClass = 'bg-yellow-400'
+    text = 'Connecting...'
   } else if (status === 'reconnecting') {
     dotClass = 'bg-yellow-400'
     text = 'Reconnecting...'

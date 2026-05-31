@@ -1,4 +1,5 @@
-const WS_URL = import.meta.env.VITE_WS_URL || (window.location.hostname === 'localhost' ? 'ws://127.0.0.1:8000/ws' : 'ws://localhost:8000/ws')
+const WS_BASE = (import.meta.env.VITE_WS_URL || `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//127.0.0.1:8000`).replace(/\/$/, '')
+const WS_URL = `${WS_BASE}/ws`
 
 export function createWebsocket(onMessage, onStatus) {
   let ws
@@ -20,19 +21,22 @@ export function createWebsocket(onMessage, onStatus) {
 
     ws.onopen = () => {
       attempt = 0
+      console.debug('[WS] connected', WS_URL)
       onStatus && onStatus('connected')
     }
 
     ws.onmessage = (evt) => {
       try {
         const data = JSON.parse(evt.data)
+        console.debug('[WS] message', data)
         onMessage && onMessage(data)
       } catch (e) {
-        // ignore non-json messages
+        console.warn('[WS] non-json message', evt.data)
       }
     }
 
-    ws.onclose = () => {
+    ws.onclose = (event) => {
+      console.warn('[WS] closed', event.code, event.reason)
       if (closedByUser) {
         onStatus && onStatus('disconnected')
         return
@@ -41,7 +45,8 @@ export function createWebsocket(onMessage, onStatus) {
       scheduleReconnect()
     }
 
-    ws.onerror = () => {
+    ws.onerror = (event) => {
+      console.error('[WS] error', event)
       onStatus && onStatus('error')
       try { ws.close() } catch (e) {}
     }
@@ -55,7 +60,7 @@ export function createWebsocket(onMessage, onStatus) {
 }
 
 export function createLogsWebsocket(namespace, pod, onMessage, onStatus) {
-  const base = (import.meta.env.VITE_WS_URL || 'ws://127.0.0.1:8000').replace(/\/$/, '')
+  const base = (import.meta.env.VITE_WS_URL || `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//127.0.0.1:8000`).replace(/\/$/, '')
   const url = `${base}/ws/logs/${namespace}/${pod}`
   let ws
   let baseDelay = 1000
@@ -74,14 +79,26 @@ export function createLogsWebsocket(namespace, pod, onMessage, onStatus) {
     if (closedByUser) return
     ws = new WebSocket(url)
 
-    ws.onopen = () => { attempt = 0; onStatus && onStatus('connected') }
-    ws.onmessage = (evt) => onMessage && onMessage(evt.data)
-    ws.onclose = () => {
+    ws.onopen = () => {
+      attempt = 0
+      console.debug('[WS LOGS] connected', url)
+      onStatus && onStatus('connected')
+    }
+    ws.onmessage = (evt) => {
+      console.debug('[WS LOGS] message', evt.data)
+      onMessage && onMessage(evt.data)
+    }
+    ws.onclose = (event) => {
+      console.warn('[WS LOGS] closed', event.code, event.reason)
       if (closedByUser) { onStatus && onStatus('disconnected'); return }
       onStatus && onStatus('disconnected')
       scheduleReconnect()
     }
-    ws.onerror = () => { onStatus && onStatus('error'); try { ws.close() } catch (e) {} }
+    ws.onerror = (event) => {
+      console.error('[WS LOGS] error', event)
+      onStatus && onStatus('error')
+      try { ws.close() } catch (e) {}
+    }
   }
 
   connect()

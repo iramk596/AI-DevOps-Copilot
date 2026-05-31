@@ -64,29 +64,33 @@ def get_pod_logs(namespace, pod_name, tail_lines=50):
 
 def stream_pod_logs(namespace, pod_name, tail_lines=10):
     """
-    Generator that yields pod logs line-by-line using Kubernetes watch stream.
+    Generator that yields pod logs line-by-line using Kubernetes read_namespaced_pod_log follow stream.
     """
     v1 = get_k8s_client()
-    w = watch.Watch()
 
     try:
-        for line in w.stream(
-            v1.read_namespaced_pod_log,
+        stream = v1.read_namespaced_pod_log(
             name=pod_name,
             namespace=namespace,
             tail_lines=tail_lines,
             follow=True,
-        ):
-            # watch yields strings (lines)
-            yield line
+            _preload_content=False,
+        )
+
+        for raw_line in stream:
+            if isinstance(raw_line, bytes):
+                raw_line = raw_line.decode('utf-8', errors='replace')
+            line = raw_line.strip('\r\n')
+            if line:
+                yield line
 
     except Exception as e:
-        # propagate as string to caller
         yield f"__STREAM_ERROR__:{str(e)}"
 
     finally:
         try:
-            w.stop()
+            if hasattr(stream, 'close'):
+                stream.close()
         except Exception:
             pass
 
