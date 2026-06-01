@@ -5,6 +5,7 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import router
+from app.api.pods import router as pods_router
 import asyncio
 import time
 
@@ -23,6 +24,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="AI DevOps Copilot")
 
 app.include_router(router)
+app.include_router(pods_router, prefix="/api")
 
 # Allow CORS for local frontend during development
 app.add_middleware(

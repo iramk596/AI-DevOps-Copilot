@@ -19,6 +19,7 @@ from app.services.kubernetes_service import (
 
 from fastapi import WebSocket, WebSocketDisconnect
 import asyncio
+import json
 from app.services.websocket_manager import manager
 
 from app.services.openai_service import analyze_logs_with_ai
@@ -301,5 +302,100 @@ async def logs_websocket(websocket: WebSocket, namespace: str, pod_name: str):
     finally:
         try:
             prod_task.cancel()
+        except Exception:
+            pass
+
+
+# Command-based WebSocket endpoint for log streaming (supports START/STOP/PAUSE/RESUME/CHANGE_POD)
+@router.websocket("/ws/logs")
+async def logs_control_websocket(websocket: WebSocket):
+    await websocket.accept()
+
+    streamer = None
+
+    async def send_callback(payload: dict):
+        try:
+            await websocket.send_json(payload)
+        except Exception:
+            pass
+
+    try:
+        while True:
+            try:
+                data = await websocket.receive_text()
+            except WebSocketDisconnect:
+                break
+
+            # expect JSON commands
+            try:
+                payload = json.loads(data)
+            except Exception:
+                await websocket.send_json({"type": "error", "message": "Invalid JSON command"})
+                continue
+
+            cmd = payload.get("command") or payload.get("type")
+
+            if not cmd:
+                await websocket.send_json({"type": "error", "message": "Missing command"})
+                continue
+
+            cmd = cmd.upper()
+
+            if cmd == "START_STREAM":
+                pod = payload.get("pod")
+                namespace = payload.get("namespace", "default")
+                if not pod:
+                    await websocket.send_json({"type": "error", "message": "Missing pod for START_STREAM"})
+                    continue
+                # create streamer per connection
+                if streamer:
+                    await streamer.stop()
+                from app.services.log_streamer import LogStreamer
+                streamer = LogStreamer()
+                await streamer.start(pod, namespace, send_callback)
+                await websocket.send_json({"type": "status", "message": f"Started stream for {pod} in {namespace}"})
+
+            elif cmd == "STOP_STREAM":
+                if streamer:
+                    await streamer.stop()
+                    streamer = None
+                await websocket.send_json({"type": "status", "message": "Stopped stream"})
+
+            elif cmd == "PAUSE_STREAM":
+                if streamer:
+                    await streamer.pause()
+                    await websocket.send_json({"type": "status", "message": "Paused stream"})
+                else:
+                    await websocket.send_json({"type": "error", "message": "No active stream to pause"})
+
+            elif cmd == "RESUME_STREAM":
+                if streamer:
+                    await streamer.resume(send_callback)
+                    await websocket.send_json({"type": "status", "message": "Resumed stream"})
+                else:
+                    await websocket.send_json({"type": "error", "message": "No active stream to resume"})
+
+            elif cmd == "CHANGE_POD":
+                pod = payload.get("pod")
+                namespace = payload.get("namespace", "default")
+                if not pod:
+                    await websocket.send_json({"type": "error", "message": "Missing pod for CHANGE_POD"})
+                    continue
+                if not streamer:
+                    from app.services.log_streamer import LogStreamer
+                    streamer = LogStreamer()
+                    await streamer.start(pod, namespace, send_callback)
+                else:
+                    await streamer.change_pod(pod, namespace, send_callback)
+                await websocket.send_json({"type": "status", "message": f"Changed pod to {pod} in {namespace}"})
+
+            else:
+                await websocket.send_json({"type": "error", "message": f"Unknown command: {cmd}"})
+
+    finally:
+        if streamer:
+            await streamer.stop()
+        try:
+            await websocket.close()
         except Exception:
             pass
