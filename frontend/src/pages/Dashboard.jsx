@@ -19,6 +19,7 @@ import {
 
 import IncidentCard from "../components/IncidentCard"
 import LiveLogsViewer from "../components/LiveLogsViewer"
+import LiveLogsTerminal from "../components/LiveLogsTerminal"
 
 function Dashboard() {
   const [issues, setIssues] = useState([])
@@ -252,6 +253,11 @@ function Dashboard() {
             </p>
           </div>
         )}
+      </div>
+
+      {/* Compact terminal */}
+      <div className="mt-8">
+        <LiveLogsTerminal compact />
       </div>
 
       {/* LOGS */}
