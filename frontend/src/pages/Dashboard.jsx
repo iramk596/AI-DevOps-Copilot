@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+﻿import { useEffect, useMemo, useState } from "react"
 import {
   Activity,
   AlertTriangle,
@@ -20,140 +20,273 @@ import {
 import IncidentCard from "../components/IncidentCard"
 import LiveLogsViewer from "../components/LiveLogsViewer"
 import LiveLogsTerminal from "../components/LiveLogsTerminal"
+import socket from "../services/socket"
+
+const normalizeTimestampSeconds = (timestamp) => {
+  if (timestamp === undefined || timestamp === null || timestamp === "") {
+    return Math.floor(Date.now() / 1000)
+  }
+
+  if (typeof timestamp === "number" && Number.isFinite(timestamp)) {
+    return timestamp > 1e12
+      ? Math.floor(timestamp / 1000)
+      : Math.floor(timestamp)
+  }
+
+  if (typeof timestamp === "string") {
+    const numeric = Number(timestamp)
+    if (Number.isFinite(numeric)) {
+      return numeric > 1e12 ? Math.floor(numeric / 1000) : Math.floor(numeric)
+    }
+
+    const parsed = Date.parse(timestamp)
+    if (!Number.isNaN(parsed)) {
+      return Math.floor(parsed / 1000)
+    }
+  }
+
+  return Math.floor(Date.now() / 1000)
+}
+
+const normalizeTimestampMs = (timestamp) => {
+  if (timestamp === undefined || timestamp === null || timestamp === "") {
+    return undefined
+  }
+
+  if (typeof timestamp === "number" && Number.isFinite(timestamp)) {
+    return timestamp > 1e12 ? timestamp : timestamp * 1000
+  }
+
+  if (typeof timestamp === "string") {
+    const numeric = Number(timestamp)
+    if (Number.isFinite(numeric)) {
+      return numeric > 1e12 ? numeric : numeric * 1000
+    }
+
+    const parsed = Date.parse(timestamp)
+    if (!Number.isNaN(parsed)) {
+      return parsed
+    }
+  }
+
+  return undefined
+}
+
+const formatTimestamp = (timestamp) => {
+  const ms = normalizeTimestampMs(timestamp)
+  if (!Number.isFinite(ms)) {
+    return "Just now"
+  }
+
+  const date = new Date(ms)
+  if (Number.isNaN(date.getTime())) {
+    return "Just now"
+  }
+
+  return date.toLocaleString()
+}
+
+const createHistoryPoints = (history = []) => {
+  if (!Array.isArray(history)) {
+    return []
+  }
+
+  return history
+    .map((item) => {
+      if (!item) {
+        return null
+      }
+
+      const value = Number(item.value ?? item.usage ?? item.cpu ?? item.memory)
+      if (!Number.isFinite(value)) {
+        return null
+      }
+
+      const rawTime = item.time ?? item.timestamp ?? item.ts
+      const timestampMs = normalizeTimestampMs(rawTime)
+      const time = new Date(timestampMs).toLocaleTimeString()
+
+      return {
+        time,
+        value,
+      }
+    })
+    .filter(Boolean)
+    .slice(-20)
+}
 
 function Dashboard() {
   const [issues, setIssues] = useState([])
-  const [connected, setConnected] = useState(false)
-
+  const [connectionStatus, setConnectionStatus] = useState("disconnected")
   const [clusterStats, setClusterStats] = useState({
-    failed_pod_count: 0,
-    running_pod_count: 0,
+    running: 0,
+    failed: 0,
+    total: 0,
     cluster_health: "unknown",
   })
-
-  const [cpuMetrics, setCpuMetrics] = useState([])
-  const [memoryMetrics, setMemoryMetrics] = useState([])
-
+  const [cpuHistory, setCpuHistory] = useState([
+    { time: new Date().toLocaleTimeString(), value: 0 },
+  ])
+  const [memoryHistory, setMemoryHistory] = useState([
+    { time: new Date().toLocaleTimeString(), value: 0 },
+  ])
   const [showLogs, setShowLogs] = useState(false)
   const [selectedPod, setSelectedPod] = useState(null)
 
-  // Fake live metrics
   useEffect(() => {
-    const interval = setInterval(() => {
-      const randomCpu = Math.floor(Math.random() * 500) + 50
-      const randomMemory = Math.floor(Math.random() * 2000) + 100
+    socket.connect()
 
-      setCpuMetrics((prev) => [
-        ...prev.slice(-5),
-        {
-          time: new Date().toLocaleTimeString(),
-          value: randomCpu,
-        },
-      ])
+    const unsubscribeStatus = socket.onStatus((status) => {
+      setConnectionStatus(status)
+    })
 
-      setMemoryMetrics((prev) => [
-        ...prev.slice(-5),
-        {
-          time: new Date().toLocaleTimeString(),
-          value: randomMemory,
-        },
-      ])
-    }, 3000)
-
-    return () => clearInterval(interval)
-  }, [])
-
-  // WebSocket
-  useEffect(() => {
-    let socket
-
-    try {
-      socket = new WebSocket("ws://127.0.0.1:8000/ws")
-
-      socket.onopen = () => {
-        setConnected(true)
+    const unsubscribeClusterUpdate = socket.on("cluster_update", (msg) => {
+      const payload = msg?.data
+      if (!payload) {
+        return
       }
 
-      socket.onclose = () => {
-        setConnected(false)
+      setClusterStats({
+        running: payload.stats?.running ?? 0,
+        failed: payload.stats?.failed ?? 0,
+        total: payload.stats?.total ?? 0,
+        cluster_health: payload.stats?.cluster_health ?? "unknown",
+      })
+
+      const cpuValue = Number(
+        payload.cpu_usage ?? payload.cpuUsage ?? payload.stats?.cpu_usage ?? payload.stats?.cpuUsage
+      )
+      const memoryValue = Number(
+        payload.memory_usage ?? payload.memoryUsage ?? payload.stats?.memory_usage ?? payload.stats?.memoryUsage
+      )
+      const now = new Date().toLocaleTimeString()
+
+      if (Number.isFinite(cpuValue)) {
+        setCpuHistory((prev) => [
+          ...prev.slice(-19),
+          { time: now, value: cpuValue },
+        ])
       }
 
-      socket.onerror = () => {
-        setConnected(false)
+      if (Number.isFinite(memoryValue)) {
+        setMemoryHistory((prev) => [
+          ...prev.slice(-19),
+          { time: now, value: memoryValue },
+        ])
       }
 
-      socket.onmessage = (event) => {
-        try {
-          const msg = JSON.parse(event.data)
-
-          setClusterStats({
-            failed_pod_count: msg.failed_pod_count || 0,
-            running_pod_count: msg.running_pod_count || 0,
-            cluster_health: msg.cluster_health || "healthy",
-          })
-
-          if (Array.isArray(msg.incidents)) {
-            setIssues((prevIssues) => {
-              return msg.incidents.map((newIssue) => {
-                const existing = prevIssues.find(
-                  (oldIssue) =>
-                    oldIssue.pod === newIssue.pod &&
-                    oldIssue.namespace === newIssue.namespace
-                )
-
-                return {
-                  ...existing,
-                  ...newIssue,
-                  ai_analysis:
-                    newIssue.ai_analysis ||
-                    existing?.ai_analysis ||
-                    "AI analysis pending...",
-                }
-              })
-            })
-          }
-        } catch (err) {
-          console.error(err)
-        }
+      if (Array.isArray(payload.incidents)) {
+        setIssues(payload.incidents)
       }
-    } catch (err) {
-      console.error(err)
+    })
+
+    const handleLogsView = (event) => {
+      const pod = event?.detail?.pod
+      if (!pod) {
+        return
+      }
+
+      setSelectedPod(pod)
+      setShowLogs(true)
     }
+
+    window.addEventListener("logs:view", handleLogsView)
 
     return () => {
-      if (socket) socket.close()
+      unsubscribeStatus()
+      unsubscribeClusterUpdate()
+      window.removeEventListener("logs:view", handleLogsView)
     }
   }, [])
 
-  // Manual fetch fallback
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch("http://127.0.0.1:8000/analyze")
-        const data = await res.json()
+    if (showLogs && selectedPod) {
+      window.requestAnimationFrame(() => {
+        document
+          .getElementById("dashboard-log-panel")
+          ?.scrollIntoView({ behavior: "smooth", block: "start" })
+      })
+    }
+  }, [showLogs, selectedPod])
 
-        if (Array.isArray(data)) {
-          setIssues(data)
-        }
-      } catch (err) {
-        console.error(err)
-      }
+  const sanitizedIssues = useMemo(() => {
+    if (!Array.isArray(issues)) {
+      return []
     }
 
-    fetchData()
-  }, [])
+    return issues
+      .filter(Boolean)
+      .map((issue, index) => {
+        const safeIssue = issue || {}
+        const rawTimestamp =
+          safeIssue.timestamp ?? safeIssue.time ?? safeIssue.ts
+        const timestampSeconds = normalizeTimestampSeconds(rawTimestamp)
+        const formattedTimestamp = formatTimestamp(rawTimestamp)
 
-  const failedPods = clusterStats.failed_pod_count
-  const runningPods = clusterStats.running_pod_count
+        return {
+          ...safeIssue,
+          pod: safeIssue.pod || safeIssue.name || `unknown-pod-${index + 1}`,
+          namespace: safeIssue.namespace || safeIssue.ns || "default",
+          status: safeIssue.status || "Unknown",
+          timestamp: timestampSeconds,
+          formattedTimestamp,
+          possible_reason:
+            safeIssue.possible_reason ||
+            safeIssue.rootCause ||
+            safeIssue.reason ||
+            "Awaiting AI diagnosis from the remediation engine.",
+          suggestion:
+            safeIssue.suggestion ||
+            safeIssue.remediation ||
+            "Review pod logs, events, and deployment configuration.",
+          ai_analysis:
+            safeIssue.ai_analysis ||
+            safeIssue.aiAnalysis ||
+            safeIssue.analysis ||
+            "AI analysis unavailable. Waiting for live cluster insights.",
+        }
+      })
+  }, [issues])
 
-  const latestCpu = cpuMetrics[cpuMetrics.length - 1]?.value || 0
-  const latestMemory = memoryMetrics[memoryMetrics.length - 1]?.value || 0
+  const hasIncidents = sanitizedIssues.length > 0
+
+  const latestCpu = useMemo(
+    () => cpuHistory[cpuHistory.length - 1]?.value ?? 0,
+    [cpuHistory]
+  )
+
+  const latestMemory = useMemo(
+    () => memoryHistory[memoryHistory.length - 1]?.value ?? 0,
+    [memoryHistory]
+  )
+
+  const clusterHealthLabel = useMemo(() => {
+    const rawHealth = String(clusterStats.cluster_health || "").toLowerCase()
+    if (rawHealth === "healthy") return "Healthy"
+    if (rawHealth === "warning" || rawHealth === "degraded") return "Degraded"
+    if (rawHealth === "critical") return "Critical"
+    return "Unknown"
+  }, [clusterStats.cluster_health])
 
   const healthColor = useMemo(() => {
-    return clusterStats.cluster_health === "healthy"
-      ? "text-green-400"
-      : "text-red-400"
-  }, [clusterStats.cluster_health])
+    if (clusterHealthLabel === "Healthy") return "text-green-400"
+    if (clusterHealthLabel === "Degraded") return "text-yellow-400"
+    if (clusterHealthLabel === "Critical") return "text-red-400"
+    return "text-slate-400"
+  }, [clusterHealthLabel])
+
+  const statusIndicatorColor = useMemo(() => {
+    if (connectionStatus === "connected") return "bg-green-400"
+    if (connectionStatus === "reconnecting") return "bg-yellow-400"
+    return "bg-red-400"
+  }, [connectionStatus])
+
+  const statusText = useMemo(() => {
+    if (connectionStatus === "connected") return "Connected"
+    if (connectionStatus === "reconnecting") return "Reconnecting..."
+    if (connectionStatus === "connecting") return "Connecting..."
+    return "Disconnected"
+  }, [connectionStatus])
 
   return (
     <div className="min-h-screen bg-[#020617] p-8 text-white">
@@ -170,13 +303,21 @@ function Dashboard() {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 rounded-full bg-green-500/10 px-4 py-2 text-sm text-green-400">
-            <span className="h-2 w-2 rounded-full bg-green-400"></span>
-            {connected ? "Connected" : "Disconnected"}
+          <div
+            className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm ${
+              connectionStatus === "connected"
+                ? "bg-green-500/10 text-green-400"
+                : connectionStatus === "reconnecting"
+                ? "bg-yellow-500/10 text-yellow-400"
+                : "bg-red-500/10 text-red-400"
+            }`}
+          >
+            <span className={`h-2 w-2 rounded-full ${statusIndicatorColor}`}></span>
+            {statusText}
           </div>
 
           <div className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-sm text-cyan-300">
-            Log Stream Healthy
+            Streaming Active
           </div>
         </div>
       </div>
@@ -185,21 +326,21 @@ function Dashboard() {
       <div className="grid gap-6 md:grid-cols-3">
         <StatusCard
           title="Cluster Status"
-          value={clusterStats.cluster_health}
+          value={clusterHealthLabel}
           icon={<ShieldCheck size={22} />}
           color={healthColor}
         />
 
         <StatusCard
           title="Failed Pods"
-          value={failedPods}
+          value={clusterStats.failed}
           icon={<ServerCrash size={22} />}
           color="text-red-400"
         />
 
         <StatusCard
           title="Running Pods"
-          value={runningPods}
+          value={clusterStats.running}
           icon={<Activity size={22} />}
           color="text-cyan-400"
         />
@@ -210,29 +351,29 @@ function Dashboard() {
         <MetricChart
           title="CPU Usage"
           icon={<Cpu size={22} />}
-          data={cpuMetrics}
+          data={cpuHistory}
           color="#22d3ee"
-          latest={`${latestCpu} mcores`}
+          latest={`${latestCpu.toFixed(1)} %`}
         />
 
         <MetricChart
           title="Memory Usage"
           icon={<Database size={22} />}
-          data={memoryMetrics}
+          data={memoryHistory}
           color="#f472b6"
-          latest={`${latestMemory} MB`}
+          latest={`${latestMemory.toFixed(1)} %`}
         />
       </div>
 
       {/* INCIDENTS */}
       <div className="mt-8 space-y-8">
-        {issues.length > 0 ? (
-          issues.map((issue, index) => (
+        {hasIncidents ? (
+          sanitizedIssues.map((issue, index) => (
             <IncidentCard
-              key={index}
+              key={`${issue.pod}-${issue.timestamp}-${index}`}
               issue={issue}
-              onOpenLogs={(pod) => {
-                setSelectedPod(pod)
+              onOpenLogs={() => {
+                setSelectedPod(issue.pod)
                 setShowLogs(true)
               }}
             />
@@ -262,7 +403,7 @@ function Dashboard() {
 
       {/* LOGS */}
       {showLogs && selectedPod && (
-        <div className="mt-8">
+        <div id="dashboard-log-panel" className="mt-8">
           <LiveLogsViewer pod={selectedPod} />
         </div>
       )}
@@ -278,9 +419,7 @@ function StatusCard({ title, value, icon, color }) {
         <span className="text-lg font-semibold">{title}</span>
       </div>
 
-      <h2 className={`text-5xl font-bold ${color}`}>
-        {value}
-      </h2>
+      <h2 className={`text-5xl font-bold ${color}`}>{value}</h2>
     </div>
   )
 }
@@ -294,27 +433,15 @@ function MetricChart({ title, icon, data, color, latest }) {
           <h2 className="text-2xl font-bold">{title}</h2>
         </div>
 
-        <span className="text-sm text-slate-400">
-          Live: {latest}
-        </span>
+        <span className="text-sm text-slate-400">Live: {latest}</span>
       </div>
 
       <div className="h-[260px] rounded-2xl border border-slate-800 bg-[#020617] p-4">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="#1e293b"
-            />
-
-            <XAxis
-              dataKey="time"
-              stroke="#64748b"
-              tick={{ fontSize: 10 }}
-            />
-
+            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+            <XAxis dataKey="time" stroke="#64748b" tick={{ fontSize: 10 }} />
             <Tooltip />
-
             <Line
               type="monotone"
               dataKey="value"

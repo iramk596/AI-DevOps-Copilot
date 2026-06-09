@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+﻿import { useEffect, useMemo, useState } from "react"
 import {
   Activity,
   Layers3,
@@ -6,48 +6,51 @@ import {
   Search,
   RefreshCw,
 } from "lucide-react"
+import socket from "../services/socket"
 
 function Cluster() {
   const [pods, setPods] = useState([])
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("All Statuses")
   const [clusterLogs, setClusterLogs] = useState([])
+  const [connectionStatus, setConnectionStatus] = useState("disconnected")
 
-  const fetchPods = async () => {
-    try {
-      const response = await fetch("http://127.0.0.1:8000/pods")
-      const data = await response.json()
-
-      const formattedPods = data.map((pod) => ({
-        pod: pod.pod || pod.name || "unknown-pod",
-        namespace: pod.namespace || "default",
-        status: pod.status || "Unknown",
-        node: pod.node || "unknown",
-        restarts: pod.restarts || 0,
-      }))
-
-      setPods(formattedPods)
-
-      setClusterLogs((prev) => [
-        {
-          message: "Cluster heartbeat healthy",
-          time: new Date().toLocaleTimeString(),
-        },
-        ...prev.slice(0, 4),
-      ])
-    } catch (error) {
-      console.error("Error fetching pods:", error)
-    }
-  }
-
+  // Subscribe to websocket updates
   useEffect(() => {
-    fetchPods()
+    // Track connection status
+    const unsubscribeStatus = socket.onStatus((status) => {
+      setConnectionStatus(status)
+    })
 
-    const interval = setInterval(() => {
-      fetchPods()
-    }, 5000)
+    // Subscribe to cluster updates
+    const unsubscribeClusterUpdate = socket.on("cluster_update", (msg) => {
+      if (msg.data && msg.data.pods) {
+        const formattedPods = msg.data.pods.map((pod) => ({
+          pod: pod.name || "unknown-pod",
+          namespace: pod.namespace || "default",
+          status: pod.status || "Unknown",
+          node: pod.node || "unknown",
+          restarts: pod.restarts || 0,
+        }))
 
-    return () => clearInterval(interval)
+        setPods(formattedPods)
+
+        // Add to cluster logs
+        setClusterLogs((prev) => [
+          {
+            message: `Cluster update: ${formattedPods.length} pods`,
+            time: new Date().toLocaleTimeString(),
+          },
+          ...prev.slice(0, 4),
+        ])
+      }
+    })
+
+    // Cleanup on unmount
+    return () => {
+      unsubscribeStatus()
+      unsubscribeClusterUpdate()
+    }
   }, [])
 
   const stats = useMemo(() => {
@@ -67,8 +70,9 @@ function Cluster() {
       ...new Set(pods.map((pod) => pod.namespace)),
     ].length
 
-    const cpuUsage = Math.floor(Math.random() * 500) + 50
-    const memoryUsage = Math.floor(Math.random() * 2000) + 1
+    // Calculate realistic CPU/memory based on pod count
+    const cpuUsage = Math.min(500, runningPods * 5 + 10)
+    const memoryUsage = Math.min(2000, runningPods * 8 + 20)
 
     return {
       totalPods,
@@ -90,6 +94,18 @@ function Cluster() {
     )
   })
 
+  const statusIndicatorColor = useMemo(() => {
+    if (connectionStatus === "connected") return "bg-emerald-400"
+    if (connectionStatus === "reconnecting") return "bg-yellow-400"
+    return "bg-red-400"
+  }, [connectionStatus])
+
+  const statusText = useMemo(() => {
+    if (connectionStatus === "connected") return "Connected"
+    if (connectionStatus === "reconnecting") return "Reconnecting..."
+    return "Offline"
+  }, [connectionStatus])
+
   return (
     <div className="min-h-screen bg-[#020617] px-8 py-6 text-white">
       {/* HEADER */}
@@ -106,14 +122,20 @@ function Cluster() {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 rounded-full bg-emerald-500/10 px-4 py-2 text-sm text-emerald-400">
-            <span className="h-2 w-2 rounded-full bg-emerald-400"></span>
-            Connected
+          <div className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm ${
+            connectionStatus === "connected"
+              ? "bg-emerald-500/10 text-emerald-400"
+              : connectionStatus === "reconnecting"
+              ? "bg-yellow-500/10 text-yellow-400"
+              : "bg-red-500/10 text-red-400"
+          }`}>
+            <span className={`h-2 w-2 rounded-full ${statusIndicatorColor}`}></span>
+            {statusText}
           </div>
 
           <div className="flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-sm text-cyan-300">
             <RefreshCw size={14} className="animate-spin" />
-            LIVE · Refreshing every 5s
+            LIVE Â· Every 5s
           </div>
         </div>
       </div>
@@ -146,13 +168,13 @@ function Cluster() {
 
         <StatCard
           title="CPU"
-          value={`${stats.cpuUsage} m`}
+          value={`${stats.cpuUsage.toFixed(0)} m`}
           color="text-cyan-300"
         />
 
         <StatCard
           title="Memory"
-          value={`${stats.memoryUsage} MB`}
+          value={`${stats.memoryUsage.toFixed(0)} MB`}
           color="text-pink-300"
         />
       </div>
@@ -174,7 +196,7 @@ function Cluster() {
               value={stats.cpuUsage}
               max={500}
               color="bg-cyan-400"
-              suffix={`${stats.cpuUsage} mcores`}
+              suffix={`${stats.cpuUsage.toFixed(0)} mcores`}
             />
 
             <ProgressBar
@@ -182,7 +204,7 @@ function Cluster() {
               value={stats.memoryUsage}
               max={2000}
               color="bg-pink-400"
-              suffix={`${stats.memoryUsage} MB`}
+              suffix={`${stats.memoryUsage.toFixed(0)} MB`}
             />
 
             <div className="rounded-2xl bg-[#020617] p-4">
@@ -191,8 +213,18 @@ function Cluster() {
                   Cluster Health
                 </span>
 
-                <span className="font-bold text-emerald-400">
-                  Healthy
+                <span className={`font-bold ${
+                  stats.failedPods === 0
+                    ? "text-emerald-400"
+                    : stats.failedPods > 3
+                    ? "text-red-400"
+                    : "text-yellow-400"
+                }`}>
+                  {stats.failedPods === 0
+                    ? "Healthy"
+                    : stats.failedPods > 3
+                    ? "Degraded"
+                    : "Warning"}
                 </span>
               </div>
             </div>
@@ -389,16 +421,12 @@ function ProgressBar({
   suffix,
 }) {
   return (
-    <div className="rounded-2xl bg-[#020617] p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <span className="text-slate-400">{label}</span>
-
-        <span className="font-semibold text-white">
-          {suffix}
-        </span>
+    <div class="rounded-2xl bg-[#020617] p-4">
+      <div class="mb-3 flex items-center justify-between">
+        <span class="text-slate-400">{label}</span>
+        <span class="font-semibold text-white">{suffix}</span>
       </div>
-
-      <div className="h-3 overflow-hidden rounded-full bg-slate-800">
+      <div class="h-3 overflow-hidden rounded-full bg-slate-800">
         <div
           className={`h-full rounded-full ${color}`}
           style={{

@@ -1,328 +1,363 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Activity, Cpu, Layers3, Sparkles, Terminal, Wifi, ShieldCheck } from 'lucide-react'
-import api from '../services/api'
-import { createWebsocket } from '../services/ws'
-import ConnectionStatus from '../components/ConnectionStatus'
-import AiMetricCard from '../components/ai/AiMetricCard'
-import AiIncidentCard from '../components/ai/AiIncidentCard'
-import AiRecommendationPanel from '../components/ai/AiRecommendationPanel'
-import KubectlCommandCard from '../components/ai/KubectlCommandCard'
-import AiTimeline from '../components/ai/AiTimeline'
-import AiTrendCharts from '../components/ai/AiTrendCharts'
-import AiConfidenceMeter from '../components/ai/AiConfidenceMeter'
-import AiMarkdownViewer from '../components/ai/AiMarkdownViewer'
-import AiOllamaPanel from '../components/ai/AiOllamaPanel'
-import LiveLogsTerminal from '../components/LiveLogsTerminal'
+import { useEffect, useMemo, useState } from "react"
+import {
+  AlertTriangle,
+  BrainCircuit,
+  CheckCircle2,
+  ClipboardCopy,
+  ShieldAlert,
+  TerminalSquare,
+} from "lucide-react"
 
-const initialIncidents = [
-  {
-    id: 'incident-1',
-    pod: 'crash-app-7d9b5f7c8d',
-    namespace: 'default',
-    status: 'CrashLoopBackOff',
-    rootCause: 'Container probe is failing intermittently due to a corrupt startup hook and insufficient liveness thresholds.',
-    remediation: 'Increase readiness probe timeout, restart the failing pod, and validate container image compatibility.',
-    confidence: 92,
-    timestamp: Date.now() - 650000,
-    details:
-      'Ollama detected repeated pod restarts and a failed startup probe. The engine recommends validating the application startup path and checking network mounts before rollback.',
-  },
-  {
-    id: 'incident-2',
-    pod: 'payments-api-5f9d7c4f5',
-    namespace: 'staging',
-    status: 'Investigating',
-    rootCause: 'Slow readiness responses are causing the deployment controller to mark new replicas as unhealthy.',
-    remediation: 'Inspect service latency, verify resource limits, and consider a pod disruption budget for safe rollout.',
-    confidence: 87,
-    timestamp: Date.now() - 360000,
-    details:
-      'The AI engine is correlating latency spikes with readiness probe failures and suggests an immediate review of recent configuration changes in the service mesh.',
-  },
-  {
-    id: 'incident-3',
-    pod: 'db-migrate-1b2c3d4e5',
-    namespace: 'database',
-    status: 'Warning',
-    rootCause: 'Memory pressure is high on the node, causing eviction events for stateful workloads.',
-    remediation: 'Adjust pod memory requests, drain the node for maintenance, and prioritize critical stateful sets.',
-    confidence: 79,
-    timestamp: Date.now() - 120000,
-    details:
-      'Telemetry shows elevated RSS memory and repeated eviction warnings. AI suggests enforcing memory limits and validating node capacity before scaling out.',
-  },
-]
-
-const initialRecommendations = [
-  {
-    id: 'rec-1',
-    category: 'Deployment Stability',
-    title: 'Stabilize CrashLoopBackOff pod rollout',
-    type: 'Runtime fix',
-    suggestion: 'Apply a rollout restart and add a temporary liveness delay to allow backend initialization to complete.',
-    reason: 'The AI saw repeated container restarts and a failing startup probe, which indicates timing mismatches during initialization.',
-    outcome: 'Expected pod recovery with fewer restarts and smoother cluster stabilization.',
-    confidence: 89,
-  },
-  {
-    id: 'rec-2',
-    category: 'Resource Management',
-    title: 'Prevent memory pressure on stateful workloads',
-    type: 'Config update',
-    suggestion: 'Raise memory requests for the database deployment and schedule a maintenance window for node draining.',
-    reason: 'Memory eviction events are impacting critical stateful pods, suggesting the cluster is overcommitted in the current zone.',
-    outcome: 'Reduced eviction frequency and improved pod uptime for database services.',
-    confidence: 85,
-  },
-  {
-    id: 'rec-3',
-    category: 'Latency Optimization',
-    title: 'Reduce readiness probe failures',
-    type: 'Probe tuning',
-    suggestion: 'Increase probe timeout and examine container startup duration for services experiencing intermittent failures.',
-    reason: 'Readiness checks are failing before the application is fully available, causing churn during rolling updates.',
-    outcome: 'Faster service readiness and less disruption during deployment rollouts.',
-    confidence: 91,
-  },
-]
-
-// generate kubectl commands dynamically from the incident data
-function buildKubectlCommands(primary) {
-  const ns = primary?.namespace || 'default'
-  const pod = primary?.pod || 'crash-app-7d9b5f7c8d'
-  const deployment = pod.split('-')[0] || pod
-
-  return [
-    { id: 'cmd-1', label: `Inspect ${pod}`, command: `kubectl describe pod ${pod} -n ${ns}` },
-    { id: 'cmd-2', label: 'Stream failing logs', command: `kubectl logs -n ${ns} ${pod} --follow` },
-    { id: 'cmd-3', label: 'View events', command: `kubectl get events -n ${ns} --sort-by=.metadata.creationTimestamp` },
-    { id: 'cmd-4', label: `Restart deployment ${deployment}`, command: `kubectl rollout restart deployment ${deployment} -n ${ns}` },
-  ]
-}
-
-const timelineEvents = [
-  { id: 't-1', step: '01', title: 'Incident detected', time: '08:40', description: 'AI telemetry flagged an unstable pod and opened a remediation task.' },
-  { id: 't-2', step: '02', title: 'AI analysis started', time: '08:42', description: 'Ollama engine began correlating pod logs, events, and probe data.' },
-  { id: 't-3', step: '03', title: 'Root cause identified', time: '08:45', description: 'AI isolated a probe timeout issue and memory pressure signature.' },
-  { id: 't-4', step: '04', title: 'Remediation generated', time: '08:46', description: 'Suggested fix actions were published for operator review.' },
-  { id: 't-5', step: '05', title: 'Pod stabilized', time: '08:51', description: 'Expected recovery path issued; monitoring confirms pod health improved.' },
-]
-
-const severityTrend = [
-  { name: '00:30', value: 4 },
-  { name: '01:00', value: 6 },
-  { name: '01:30', value: 8 },
-  { name: '02:00', value: 6 },
-  { name: '02:30', value: 7 },
-  { name: '03:00', value: 5 },
-]
-
-const remediationSuccess = [
-  { period: 'Live', percent: 92 },
-  { period: '1h', percent: 85 },
-  { period: '24h', percent: 88 },
-  { period: '7d', percent: 91 },
-]
-
-const aiMarkdownResponse = `### Recommended remediation summary
-
-- Increase the **readiness probe timeout** for the \`payments-api\` deployment.
-- Apply the following command to inspect the pod logs:
-
-\`\`\`
-kubectl logs -n default crash-app-7d9b5f7c8d --follow
-\`\`\`
-
-### Why this fix?
-
-1. The pod is failing startup checks before the app becomes fully available.
-2. AI detected repeated \`CrashLoopBackOff\` events.
-
-### Expected outcome
-
-- Faster rollout completion
-- Reduced probe failures
-- Improved stability for production traffic
-`
-
-const modelMeta = {
-  model: 'ollama-mistral-7b',
-  latency: 184,
-  duration: 3.8,
-  source: 'Kubernetes event stream',
-}
+import socket from "../services/socket"
 
 function AIInsights() {
-  const [connectionStatus, setConnectionStatus] = useState('connecting')
-  const [incidents, setIncidents] = useState(initialIncidents)
-  const [recommendations, setRecommendations] = useState(initialRecommendations)
-  const [loading, setLoading] = useState(true)
-
-  const avgConfidence = useMemo(() => {
-    if (!incidents.length) return 0
-    return Math.round(incidents.reduce((sum, item) => sum + (item.confidence || 0), 0) / incidents.length)
-  }, [incidents])
-
-  const incidentSeverityCount = useMemo(() => {
-    return incidents.filter((item) => item.status?.toLowerCase().includes('crash')).length
-  }, [incidents])
+  const [incidents, setIncidents] = useState([])
+  const [connected, setConnected] = useState(false)
+  const [copiedCommand, setCopiedCommand] = useState(null)
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await api.get('/analyze')
-        if (Array.isArray(response.data) && response.data.length) {
-          setIncidents(response.data.map((entry, index) => ({
-            ...entry,
-            id: entry.id || `remote-${index}`,
-            rootCause: entry.possible_reason || entry.rootCause || '',
-            remediation: entry.suggestion || entry.remediation || '',
-            confidence: entry.confidence || 82,
-            timestamp: entry.timestamp ? entry.timestamp * 1000 : Date.now(),
-            details: entry.details || entry.ai_analysis || '',
-          })))
-        }
-      } catch (error) {
-        console.warn('AI Insights fetch fallback to local mock data', error)
-      } finally {
-        setLoading(false)
+    socket.connect()
+
+    const unsubscribeStatus = socket.onStatus((status) => {
+      setConnected(status === "connected")
+    })
+
+    const unsubscribeCluster = socket.on("cluster_update", (payload) => {
+      if (payload?.data?.incidents) {
+        setIncidents(payload.data.incidents)
       }
-    }
+    })
 
-    fetchData()
-
-    const ws = createWebsocket(
-      (msg) => {
-        if (Array.isArray(msg.incidents)) {
-          setIncidents(msg.incidents.map((entry, index) => ({
-            ...entry,
-            id: entry.id || `ws-${index}`,
-            rootCause: entry.possible_reason || entry.rootCause || '',
-            remediation: entry.suggestion || entry.remediation || '',
-            confidence: entry.confidence || 80,
-            timestamp: entry.timestamp ? entry.timestamp * 1000 : Date.now(),
-            details: entry.details || entry.ai_analysis || '',
-          })))
-        }
-      },
-      (status) => setConnectionStatus(status)
-    )
+    const unsubscribeIncident = socket.on("incident", (payload) => {
+      if (payload?.data) {
+        setIncidents((prev) => [payload.data, ...prev])
+      }
+    })
 
     return () => {
-      ws && ws.close()
+      unsubscribeStatus()
+      unsubscribeCluster()
+      unsubscribeIncident()
     }
   }, [])
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#020617] p-8 text-white">
-        <div className="flex min-h-[60vh] items-center justify-center">
-          <div className="rounded-3xl border border-slate-800 bg-slate-900/90 px-8 py-12 text-center shadow-xl">
-            <p className="text-xl font-semibold text-cyan-300">Loading AI insights...</p>
-            <p className="mt-2 text-slate-400">Connecting to Ollama and analyzing cluster telemetry.</p>
-          </div>
-        </div>
-      </div>
-    )
+  const latestIncident =
+    incidents.length > 0
+      ? incidents[0]
+      : {
+          pod: "crash-app",
+          namespace: "default",
+          status: "CrashLoopBackOff",
+          possible_reason:
+            "Container repeatedly crashing during startup.",
+          suggestion:
+            "Check application logs and environment variables.",
+          ai_analysis:
+            "AI detected repeated container failures caused by invalid startup configuration.",
+        }
+
+  const commands = [
+    `kubectl describe pod ${latestIncident.pod}`,
+    `kubectl logs ${latestIncident.pod}`,
+    `kubectl get pod ${latestIncident.pod} -o wide`,
+    `kubectl delete pod ${latestIncident.pod}`,
+  ]
+
+  const severityTrend = [
+    { label: "Critical", value: 4 },
+    { label: "Warning", value: 2 },
+    { label: "Healthy", value: 8 },
+  ]
+
+  const timeline = [
+    "Incident detected",
+    "AI analysis completed",
+    "Root cause identified",
+    "Remediation generated",
+    "Awaiting operator action",
+  ]
+
+  const remediationConfidence = 92
+
+  const aiMarkdownResponse = `
+## Root Cause Analysis
+
+The pod entered a **CrashLoopBackOff** state due to repeated container startup failures.
+
+### Possible Causes
+- Invalid environment variables
+- Database connection failure
+- Missing application dependency
+- Startup configuration mismatch
+
+### Recommended Steps
+1. Inspect container logs
+2. Verify deployment configuration
+3. Check image environment variables
+4. Restart deployment if needed
+
+### Suggested Command
+\`\`\`bash
+kubectl describe pod ${latestIncident.pod}
+\`\`\`
+`
+
+  const copyCommand = async (command) => {
+    try {
+      await navigator.clipboard.writeText(command)
+      setCopiedCommand(command)
+
+      setTimeout(() => {
+        setCopiedCommand(null)
+      }, 2000)
+    } catch (err) {
+      console.error(err)
+    }
   }
 
+  const connectionBadge = useMemo(() => {
+    return connected
+      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+      : "bg-red-500/10 text-red-400 border-red-500/20"
+  }, [connected])
+
   return (
-    <div className="min-h-screen bg-[#020617] px-8 py-8 text-white">
-      <div className="mb-10 grid gap-6 xl:grid-cols-[1.8fr_0.9fr]">
-        <div className="space-y-6 rounded-[32px] border border-slate-800 bg-slate-950/80 p-8 shadow-xl shadow-cyan-500/5 backdrop-blur-xl">
-          <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-            <div>
-              <p className="text-sm uppercase tracking-[0.28em] text-cyan-300/75">AI Operations Center</p>
-              <h1 className="mt-3 text-4xl font-semibold text-white">AI-powered Kubernetes incident intelligence and remediation.</h1>
-              <p className="mt-3 max-w-2xl text-slate-400">Centralized incident context, AI root cause analysis, suggested kubectl runbooks, and confidence-driven remediation summaries for enterprise operation teams.</p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-3xl border border-slate-800 bg-slate-900/95 px-5 py-4 text-sm text-slate-300 shadow-sm">
-                <span className="inline-flex items-center gap-2 font-semibold text-cyan-300">
-                  <span className="h-2.5 w-2.5 rounded-full bg-cyan-400 animate-ping" /> Live AI
-                </span>
-              </div>
-              <div className="rounded-3xl border border-slate-800 bg-slate-900/95 px-5 py-4 text-sm text-slate-300 shadow-sm">
-                <span className="inline-flex items-center gap-2 font-semibold text-emerald-300">
-                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" /> Telemetry active
-                </span>
-              </div>
-              <div className="rounded-3xl border border-slate-800 bg-slate-900/95 px-5 py-4 text-sm text-slate-300 shadow-sm">
-                <div className="flex items-center gap-2 font-semibold text-white">
-                  <Wifi size={14} />
-                  <ConnectionStatus status={connectionStatus} />
+    <div className="min-h-screen bg-[#020817] px-6 py-8 text-white">
+      <div className="mx-auto max-w-[1700px]">
+        {/* HEADER */}
+        <div className="mb-8 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div>
+            <p className="text-sm uppercase tracking-[0.25em] text-cyan-400">
+              AI Operations Center
+            </p>
+
+            <h1 className="mt-3 text-5xl font-black tracking-tight text-white">
+              AI Insights Engine
+            </h1>
+
+            <p className="mt-3 max-w-3xl text-slate-400">
+              Real-time AI remediation, Kubernetes telemetry,
+              operational runbooks, and incident intelligence.
+            </p>
+          </div>
+
+          <div
+            className={`flex items-center gap-2 rounded-full border px-5 py-3 text-sm font-medium ${connectionBadge}`}
+          >
+            <span className="h-2 w-2 rounded-full bg-current" />
+            {connected ? "WebSocket Connected" : "Disconnected"}
+          </div>
+        </div>
+
+        {/* TOP GRID */}
+        <div className="grid gap-6 xl:grid-cols-3">
+          {/* INCIDENT CARD */}
+          <section className="xl:col-span-2 rounded-3xl border border-red-500/20 bg-gradient-to-br from-slate-900 to-[#111827] p-6 shadow-2xl shadow-red-500/5">
+            <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+              <div>
+                <div className="flex items-center gap-3">
+                  <ShieldAlert className="text-red-400" size={32} />
+
+                  <h2 className="text-4xl font-bold text-red-400">
+                    Active Incident
+                  </h2>
+                </div>
+
+                <p className="mt-3 text-slate-400">
+                  AI detected a Kubernetes workload anomaly.
+                </p>
+
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <span className="rounded-full bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-300 ring-1 ring-red-500/20">
+                    {latestIncident.status}
+                  </span>
+
+                  <span className="rounded-full bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-300 ring-1 ring-cyan-500/20">
+                    Pod: {latestIncident.pod}
+                  </span>
                 </div>
               </div>
+
+              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-5 text-center">
+                <p className="text-sm uppercase tracking-wide text-emerald-300">
+                  Confidence
+                </p>
+
+                <h2 className="mt-3 text-5xl font-black text-emerald-400">
+                  {remediationConfidence}%
+                </h2>
+              </div>
             </div>
+
+            {/* ROOT CAUSE */}
+            <div className="mt-8 rounded-2xl border border-slate-800 bg-black/30 p-5">
+              <div className="flex items-center gap-3">
+                <BrainCircuit className="text-cyan-400" size={24} />
+
+                <h3 className="text-2xl font-bold text-cyan-400">
+                  AI Root Cause Analysis
+                </h3>
+              </div>
+
+              <p className="mt-5 leading-8 text-slate-300">
+                {latestIncident.ai_analysis}
+              </p>
+            </div>
+
+            {/* SUGGESTED COMMANDS */}
+            <div className="mt-8">
+              <div className="mb-5 flex items-center gap-3">
+                <TerminalSquare
+                  className="text-cyan-400"
+                  size={24}
+                />
+
+                <h3 className="text-2xl font-bold text-cyan-400">
+                  Operational Runbook
+                </h3>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                {commands.map((command, index) => (
+                  <div
+                    key={index}
+                    className="rounded-2xl border border-slate-800 bg-slate-950/90 p-4"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <code className="text-sm text-cyan-300">
+                        {command}
+                      </code>
+
+                      <button
+                        onClick={() => copyCommand(command)}
+                        className="rounded-lg border border-slate-700 p-2 transition hover:border-cyan-500 hover:text-cyan-300"
+                      >
+                        <ClipboardCopy size={16} />
+                      </button>
+                    </div>
+
+                    {copiedCommand === command && (
+                      <p className="mt-3 text-xs text-emerald-400">
+                        Command copied successfully
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* SIDEBAR */}
+          <aside className="space-y-6">
+            {/* TIMELINE */}
+            <section className="rounded-3xl border border-slate-800 bg-slate-950/90 p-6">
+              <h2 className="text-2xl font-bold text-cyan-400">
+                Incident Timeline
+              </h2>
+
+              <div className="mt-6 space-y-5">
+                {timeline.map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start gap-4"
+                  >
+                    <div className="mt-1 h-3 w-3 rounded-full bg-cyan-400" />
+
+                    <div>
+                      <p className="text-sm text-white">
+                        {item}
+                      </p>
+
+                      <p className="mt-1 text-xs text-slate-500">
+                        {new Date().toLocaleTimeString()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* SEVERITY */}
+            <section className="rounded-3xl border border-slate-800 bg-slate-950/90 p-6">
+              <h2 className="text-2xl font-bold text-cyan-400">
+                Severity Trend
+              </h2>
+
+              <div className="mt-6 space-y-5">
+                {severityTrend.map((item, index) => (
+                  <div key={index}>
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-sm text-slate-300">
+                        {item.label}
+                      </span>
+
+                      <span className="text-sm text-white">
+                        {item.value}
+                      </span>
+                    </div>
+
+                    <div className="h-3 overflow-hidden rounded-full bg-slate-800">
+                      <div
+                        className={`h-full rounded-full ${
+                          item.label === "Critical"
+                            ? "bg-red-400"
+                            : item.label === "Warning"
+                              ? "bg-yellow-400"
+                              : "bg-emerald-400"
+                        }`}
+                        style={{
+                          width: `${item.value * 10}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* OLLAMA PANEL */}
+            <section className="rounded-3xl border border-cyan-500/10 bg-cyan-500/5 p-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle2
+                  className="text-emerald-400"
+                  size={24}
+                />
+
+                <h2 className="text-2xl font-bold text-cyan-400">
+                  AI Engine
+                </h2>
+              </div>
+
+              <p className="mt-5 leading-7 text-slate-300">
+                AI remediation and operational analysis are
+                currently generated using Ollama local inference.
+              </p>
+
+              <div className="mt-6 rounded-2xl border border-slate-800 bg-black/30 p-4">
+                <p className="text-sm text-slate-400">
+                  Model:
+                </p>
+
+                <p className="mt-2 font-semibold text-emerald-400">
+                  llama3
+                </p>
+              </div>
+            </section>
+          </aside>
+        </div>
+
+        {/* AI RESPONSE */}
+        <section className="mt-8 rounded-3xl border border-slate-800 bg-slate-950/90 p-6">
+          <h2 className="text-3xl font-bold text-cyan-400">
+            Generated AI Remediation
+          </h2>
+
+          <div className="mt-6 overflow-x-auto rounded-2xl border border-slate-800 bg-black/30 p-6">
+            <pre className="whitespace-pre-wrap text-sm leading-8 text-green-300">
+              {aiMarkdownResponse}
+            </pre>
           </div>
-
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            <AiMetricCard icon={<Activity size={24} />} title="Active AI Incidents" value={incidents.length} change="+18%" accentColor="text-cyan-400" />
-            <AiMetricCard icon={<ShieldCheck size={24} />} title="Critical Severity" value={`${incidentSeverityCount}`} change="+7%" accentColor="text-red-400" />
-            <AiMetricCard icon={<Sparkles size={24} />} title="AI Confidence Avg" value={`${avgConfidence}%`} change="Stable" accentColor="text-emerald-400" />
-            <AiMetricCard icon={<Terminal size={24} />} title="Suggested Fixes Generated" value={initialRecommendations.length} change="Realtime" accentColor="text-yellow-300" />
-            <AiMetricCard icon={<Layers3 size={24} />} title="Pods Under Analysis" value={12} change="+25%" accentColor="text-cyan-300" />
-            <AiMetricCard icon={<Cpu size={24} />} title="AI Engine Status" value="Online" change="0.18s" accentColor="text-cyan-400" />
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <AiConfidenceMeter label="Inference confidence" value={avgConfidence || 82} />
-          <AiOllamaPanel {...modelMeta} />
-        </div>
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[1.25fr_0.95fr]">
-        <div className="space-y-6">
-          <section className="rounded-3xl border border-slate-800 bg-slate-950/90 p-6 shadow-sm">
-            <div className="mb-6 flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm uppercase tracking-[0.22em] text-slate-400">Root Cause Analysis</p>
-                <h2 className="mt-2 text-3xl font-semibold text-white">Enterprise incident cards</h2>
-              </div>
-            </div>
-            <div className="space-y-6">
-              {incidents.map((incident) => (
-                <AiIncidentCard key={incident.id} incident={incident} />
-              ))}
-            </div>
-          </section>
-
-          <section className="grid gap-6 lg:grid-cols-2">
-            {recommendations.map((item) => (
-              <AiRecommendationPanel key={item.id} item={item} />
-            ))}
-          </section>
-
-          <section className="rounded-3xl border border-slate-800 bg-slate-950/90 p-6 shadow-sm">
-            <div className="mb-6 flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm uppercase tracking-[0.22em] text-slate-400">Suggested Kubectl Commands</p>
-                <h2 className="mt-2 text-3xl font-semibold text-white">Operational runbook</h2>
-              </div>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              {buildKubectlCommands(incidents[0]).map((item) => (
-                <KubectlCommandCard key={item.id} label={item.label} command={item.command} />
-              ))}
-            </div>
-          </section>
-        </div>
-
-        <aside className="space-y-6">
-          <LiveLogsTerminal />
-          <AiTimeline events={timelineEvents} />
-          <AiTrendCharts trends={severityTrend} success={remediationSuccess} />
-          <section className="rounded-3xl border border-slate-800 bg-slate-950/90 p-6 shadow-sm">
-            <div className="mb-6 flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm uppercase tracking-[0.22em] text-slate-400">AI response viewer</p>
-                <h2 className="mt-2 text-3xl font-semibold text-white">Generated remediation details</h2>
-              </div>
-            </div>
-            <AiMarkdownViewer content={aiMarkdownResponse} />
-          </section>
-        </aside>
+        </section>
       </div>
     </div>
   )

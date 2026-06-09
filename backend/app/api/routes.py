@@ -211,56 +211,6 @@ def create_incident(payload: dict):
         )
 
 
-def build_cluster_payload():
-    pods = get_all_pods()
-    issues = analyze_cluster_issues()
-
-    failed = sum(1 for p in pods if p.get("status") != "Running")
-    running = sum(1 for p in pods if p.get("status") == "Running")
-    cluster_health = "degraded" if failed > 0 else "healthy"
-    incident_count = len(issues)
-
-    metrics = get_cluster_metrics()
-
-    return {
-        "type": "cluster_update",
-        "timestamp": int(time.time()),
-        "failed_pod_count": failed,
-        "running_pod_count": running,
-        "cluster_health": cluster_health,
-        "incident_count": incident_count,
-        "incidents": issues,
-        "metrics": metrics,
-    }
-
-
-# WebSocket endpoint for live cluster updates
-@router.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-
-    await manager.connect(websocket)
-
-    try:
-        try:
-            initial_payload = build_cluster_payload()
-            await websocket.send_json(initial_payload)
-        except Exception:
-            pass
-
-        # keep the connection open; clients may send pings
-        while True:
-            try:
-                msg = await websocket.receive_text()
-                # optional: handle client pings or commands
-                if msg == "ping":
-                    await websocket.send_text("pong")
-            except WebSocketDisconnect:
-                break
-
-    finally:
-        await manager.disconnect(websocket)
-
-
 # WebSocket endpoint for streaming pod logs
 @router.websocket("/ws/logs/{namespace}/{pod_name}")
 async def logs_websocket(websocket: WebSocket, namespace: str, pod_name: str):
