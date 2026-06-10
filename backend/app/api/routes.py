@@ -21,6 +21,7 @@ from fastapi import WebSocket, WebSocketDisconnect
 import asyncio
 import json
 from app.services.websocket_manager import manager
+from app.services.log_streamer import LogStreamer
 
 from app.services.openai_service import analyze_logs_with_ai
 
@@ -216,44 +217,22 @@ def create_incident(payload: dict):
 async def logs_websocket(websocket: WebSocket, namespace: str, pod_name: str):
     await websocket.accept()
 
-    queue = asyncio.Queue()
-    loop = asyncio.get_running_loop()
+    streamer = LogStreamer()
 
-    def producer():
+    async def send_callback(payload: dict):
         try:
-            for line in stream_pod_logs(namespace, pod_name, tail_lines=10):
-                loop.call_soon_threadsafe(queue.put_nowait, line)
-        except Exception as e:
-            loop.call_soon_threadsafe(queue.put_nowait, f"__STREAM_ERROR__:{e}")
-        finally:
-            loop.call_soon_threadsafe(queue.put_nowait, None)
-
-    prod_task = asyncio.to_thread(producer)
+            await websocket.send_json(payload)
+        except Exception:
+            pass
 
     try:
+        await streamer.start(pod_name, namespace, send_callback)
         while True:
-            line = await queue.get()
-            if line is None:
-                break
-            if isinstance(line, str) and line.startswith("__STREAM_ERROR__:"):
-                try:
-                    await websocket.send_text(line.replace("__STREAM_ERROR__:", "Error streaming logs: "))
-                except Exception:
-                    pass
-                break
-
-            try:
-                await websocket.send_text(line)
-            except WebSocketDisconnect:
-                break
-
+            await websocket.receive_text()
     except WebSocketDisconnect:
         return
     finally:
-        try:
-            prod_task.cancel()
-        except Exception:
-            pass
+        await streamer.stop()
 
 
 # Command-based WebSocket endpoint for log streaming (supports START/STOP/PAUSE/RESUME/CHANGE_POD)
@@ -300,7 +279,6 @@ async def logs_control_websocket(websocket: WebSocket):
                 # create streamer per connection
                 if streamer:
                     await streamer.stop()
-                from app.services.log_streamer import LogStreamer
                 streamer = LogStreamer()
                 await streamer.start(pod, namespace, send_callback)
                 await websocket.send_json({"type": "status", "message": f"Started stream for {pod} in {namespace}"})
@@ -332,7 +310,6 @@ async def logs_control_websocket(websocket: WebSocket):
                     await websocket.send_json({"type": "error", "message": "Missing pod for CHANGE_POD"})
                     continue
                 if not streamer:
-                    from app.services.log_streamer import LogStreamer
                     streamer = LogStreamer()
                     await streamer.start(pod, namespace, send_callback)
                 else:
