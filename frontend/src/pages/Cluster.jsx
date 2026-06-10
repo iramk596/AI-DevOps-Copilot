@@ -14,6 +14,14 @@ function Cluster() {
   const [statusFilter, setStatusFilter] = useState("All Statuses")
   const [clusterLogs, setClusterLogs] = useState([])
   const [connectionStatus, setConnectionStatus] = useState("disconnected")
+  const [clusterMetrics, setClusterMetrics] = useState({
+    running_pods: 0,
+    failed_pods: 0,
+    total_pods: 0,
+    cpu_mcores: 0,
+    memory_mb: 0,
+    estimated: true,
+  })
 
   // Subscribe to websocket updates
   useEffect(() => {
@@ -34,6 +42,14 @@ function Cluster() {
         }))
 
         setPods(formattedPods)
+        setClusterMetrics({
+          running_pods: msg.data.metrics?.running_pods ?? msg.data.stats?.running ?? formattedPods.filter((pod) => pod.status === "Running").length,
+          failed_pods: msg.data.metrics?.failed_pods ?? msg.data.stats?.failed ?? formattedPods.filter((pod) => pod.status !== "Running").length,
+          total_pods: msg.data.metrics?.total_pods ?? msg.data.stats?.total ?? formattedPods.length,
+          cpu_mcores: Number(msg.data.metrics?.cpu_mcores ?? 0),
+          memory_mb: Number(msg.data.metrics?.memory_mb ?? 0),
+          estimated: msg.data.metrics?.estimated ?? true,
+        })
 
         // Add to cluster logs
         setClusterLogs((prev) => [
@@ -54,25 +70,16 @@ function Cluster() {
   }, [])
 
   const stats = useMemo(() => {
-    const totalPods = pods.length
-
-    const runningPods = pods.filter(
-      (pod) => pod.status === "Running"
-    ).length
-
-    const failedPods = pods.filter(
-      (pod) =>
-        pod.status === "Failed" ||
-        pod.status === "CrashLoopBackOff"
-    ).length
+    const totalPods = clusterMetrics.total_pods
+    const runningPods = clusterMetrics.running_pods
+    const failedPods = clusterMetrics.failed_pods
 
     const namespaces = [
       ...new Set(pods.map((pod) => pod.namespace)),
     ].length
 
-    // Calculate realistic CPU/memory based on pod count
-    const cpuUsage = Math.min(500, runningPods * 5 + 10)
-    const memoryUsage = Math.min(2000, runningPods * 8 + 20)
+    const cpuUsage = clusterMetrics.cpu_mcores
+    const memoryUsage = clusterMetrics.memory_mb
 
     return {
       totalPods,
@@ -81,8 +88,9 @@ function Cluster() {
       namespaces,
       cpuUsage,
       memoryUsage,
+      estimated: clusterMetrics.estimated,
     }
-  }, [pods])
+  }, [clusterMetrics, pods])
 
   const filteredPods = pods.filter((pod) => {
     const podName = pod.pod || pod.name || ""
@@ -168,13 +176,13 @@ function Cluster() {
 
         <StatCard
           title="CPU"
-          value={`${stats.cpuUsage.toFixed(0)} m`}
+          value={`${stats.estimated ? "~" : ""}${stats.cpuUsage.toFixed(0)} m`}
           color="text-cyan-300"
         />
 
         <StatCard
           title="Memory"
-          value={`${stats.memoryUsage.toFixed(0)} MB`}
+          value={`${stats.estimated ? "~" : ""}${stats.memoryUsage.toFixed(0)} MB`}
           color="text-pink-300"
         />
       </div>
@@ -196,7 +204,7 @@ function Cluster() {
               value={stats.cpuUsage}
               max={500}
               color="bg-cyan-400"
-              suffix={`${stats.cpuUsage.toFixed(0)} mcores`}
+              suffix={`${stats.estimated ? "~" : ""}${stats.cpuUsage.toFixed(0)} mcores`}
             />
 
             <ProgressBar
@@ -204,7 +212,7 @@ function Cluster() {
               value={stats.memoryUsage}
               max={2000}
               color="bg-pink-400"
-              suffix={`${stats.memoryUsage.toFixed(0)} MB`}
+              suffix={`${stats.estimated ? "~" : ""}${stats.memoryUsage.toFixed(0)} MB`}
             />
 
             <div className="rounded-2xl bg-[#020617] p-4">

@@ -67,8 +67,6 @@ async def startup_event():
         - Incident detection and analysis
         - Connection heartbeats
         """
-        heartbeat_counter = 0
-        
         while True:
             try:
                 # Fetch current cluster state
@@ -117,21 +115,37 @@ async def startup_event():
                                 "AI analysis unavailable"
                             )
 
+                        manager.incident_cache[issue_key] = dict(issue)
+                        logger.info(
+                            "Broadcasting incident: %s/%s %s",
+                            issue.get("namespace"),
+                            issue.get("pod"),
+                            issue.get("status"),
+                        )
+                        await manager.broadcast({
+                            "type": "incident",
+                            "timestamp": int(time.time()),
+                            "data": issue,
+                        })
+                    elif issue_key in manager.incident_cache:
+                        issue.update(manager.incident_cache[issue_key])
+
                 # Fetch cluster metrics
                 metrics = get_cluster_metrics()
-                
-                # Generate synthetic CPU/Memory trends (improved)
-                # In production, use metrics-server or Prometheus
-                cpu_value = min(95, max(10, metrics.get("running_pods", 0) * 5))
-                memory_value = min(90, max(20, metrics.get("running_pods", 0) * 8))
+                cpu_value = metrics.get("cpu_usage_percent", 0)
+                memory_value = metrics.get("memory_usage_percent", 0)
                 
                 cpu_history.append({
                     "time": int(time.time()),
                     "value": cpu_value,
+                    "estimated": metrics.get("estimated", True),
+                    "source": metrics.get("metrics_source", "unavailable"),
                 })
                 memory_history.append({
                     "time": int(time.time()),
                     "value": memory_value,
+                    "estimated": metrics.get("estimated", True),
+                    "source": metrics.get("metrics_source", "unavailable"),
                 })
 
                 # Build cluster update payload
@@ -163,15 +177,15 @@ async def startup_event():
                 }
 
                 # Broadcast to all connected clients
-                await manager.broadcast(payload)
-                
-                logger.debug(
-                    f"Broadcast update: "
-                    f"{running} running, "
-                    f"{failed} failed, "
-                    f"{incident_count} incidents, "
-                    f"{manager.get_connection_count()} clients"
+                logger.info(
+                    "Broadcasting cluster update: %s running, %s failed, "
+                    "%s incidents, %s clients",
+                    running,
+                    failed,
+                    incident_count,
+                    manager.get_connection_count(),
                 )
+                await manager.broadcast(payload)
 
             except Exception as e:
                 logger.exception(f"Cluster monitoring error: {e}")

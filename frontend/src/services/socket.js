@@ -63,6 +63,12 @@ function handleMessage(data) {
   }
 
   console.debug('[WS] Message type:', type, 'clients:', messageHandlers.size)
+  if (type === 'cluster_update') {
+    console.log('Received cluster update')
+  }
+  if (type === 'incident') {
+    console.log('Received incident')
+  }
 
   // Notify all registered handlers for this message type
   if (messageHandlers.has(type)) {
@@ -131,7 +137,7 @@ function connect() {
 
     ws.onopen = () => {
       reconnectAttempt = 0
-      console.log('[WS] Connected successfully')
+      console.log('WebSocket connected')
       notifyStatusChange('connected')
       setupHeartbeat()
     }
@@ -236,7 +242,8 @@ const socketService = {
    * Initialize and connect the websocket
    */
   connect() {
-    if (!closedByUser && !ws) {
+    closedByUser = false
+    if (!ws || ws.readyState === WebSocket.CLOSED) {
       connect()
     }
   },
