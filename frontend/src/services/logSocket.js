@@ -10,11 +10,29 @@ class LogSocket {
     this.queue = []
     this.reconnectDelay = 1000
     this.maxDelay = 30000
+    this.status = 'disconnected'
+    this.reconnectTimer = null
     this.shouldReconnect = true
     this._connect()
   }
 
+  connect() {
+    this.shouldReconnect = true
+    if (
+      this.ws &&
+      (this.ws.readyState === WebSocket.OPEN ||
+        this.ws.readyState === WebSocket.CONNECTING)
+    ) {
+      return
+    }
+    this._connect()
+  }
+
   _connect() {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer)
+      this.reconnectTimer = null
+    }
     this._emitStatus('connecting')
     this.ws = new WebSocket(this.url)
 
@@ -53,7 +71,9 @@ class LogSocket {
   }
 
   _scheduleReconnect() {
-    setTimeout(() => {
+    if (this.reconnectTimer) return
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null
       this.reconnectDelay = Math.min(this.reconnectDelay * 2, this.maxDelay)
       this._connect()
     }, this.reconnectDelay)
@@ -61,11 +81,12 @@ class LogSocket {
   }
 
   _emitStatus(s) {
+    this.status = s
     this.statusListeners.forEach((cb) => cb(s))
   }
 
   onMessage(cb) { this.listeners.add(cb); return () => this.listeners.delete(cb) }
-  onStatus(cb) { this.statusListeners.add(cb); return () => this.statusListeners.delete(cb) }
+  onStatus(cb) { this.statusListeners.add(cb); cb(this.status); return () => this.statusListeners.delete(cb) }
 
   send(obj) {
     try {
@@ -81,16 +102,21 @@ class LogSocket {
   }
 
   startStream(pod, namespace='default') {
+    this.connect()
     this.send({ command: 'START_STREAM', pod, namespace })
   }
 
-  stopStream() { this.send({ command: 'STOP_STREAM' }) }
-  pauseStream() { this.send({ command: 'PAUSE_STREAM' }) }
-  resumeStream() { this.send({ command: 'RESUME_STREAM' }) }
-  changePod(pod, namespace='default') { this.send({ command: 'CHANGE_POD', pod, namespace }) }
+  stopStream() { this.connect(); this.send({ command: 'STOP_STREAM' }) }
+  pauseStream() { this.connect(); this.send({ command: 'PAUSE_STREAM' }) }
+  resumeStream() { this.connect(); this.send({ command: 'RESUME_STREAM' }) }
+  changePod(pod, namespace='default') { this.connect(); this.send({ command: 'CHANGE_POD', pod, namespace }) }
 
   close() {
     this.shouldReconnect = false
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer)
+      this.reconnectTimer = null
+    }
     try { this.ws && this.ws.close() } catch (e) {}
   }
 }
