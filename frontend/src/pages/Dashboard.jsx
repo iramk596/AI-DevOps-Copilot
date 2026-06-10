@@ -153,31 +153,37 @@ function Dashboard() {
         cluster_health: payload.stats?.cluster_health ?? "unknown",
       })
 
-      const cpuValue = Number(
-        payload.cpu_usage ?? payload.cpuUsage ?? payload.stats?.cpu_usage ?? payload.stats?.cpuUsage
-      )
-      const memoryValue = Number(
-        payload.memory_usage ?? payload.memoryUsage ?? payload.stats?.memory_usage ?? payload.stats?.memoryUsage
-      )
-      const now = new Date().toLocaleTimeString()
+      const nextCpuHistory = createHistoryPoints(payload.cpu_history)
+      const nextMemoryHistory = createHistoryPoints(payload.memory_history)
 
-      if (Number.isFinite(cpuValue)) {
-        setCpuHistory((prev) => [
-          ...prev.slice(-19),
-          { time: now, value: cpuValue },
-        ])
+      if (nextCpuHistory.length > 0) {
+        setCpuHistory(nextCpuHistory)
       }
 
-      if (Number.isFinite(memoryValue)) {
-        setMemoryHistory((prev) => [
-          ...prev.slice(-19),
-          { time: now, value: memoryValue },
-        ])
+      if (nextMemoryHistory.length > 0) {
+        setMemoryHistory(nextMemoryHistory)
       }
 
       if (Array.isArray(payload.incidents)) {
         setIssues(payload.incidents)
       }
+    })
+
+    const unsubscribeIncident = socket.on("incident", (msg) => {
+      if (!msg?.data) {
+        return
+      }
+
+      setIssues((prev) => {
+        const incident = msg.data
+        const nextKey = `${incident.namespace}:${incident.pod}:${incident.status}`
+        const remaining = prev.filter((item) => {
+          const itemKey = `${item.namespace}:${item.pod}:${item.status}`
+          return itemKey !== nextKey
+        })
+
+        return [incident, ...remaining]
+      })
     })
 
     const handleLogsView = (event) => {
@@ -195,6 +201,7 @@ function Dashboard() {
     return () => {
       unsubscribeStatus()
       unsubscribeClusterUpdate()
+      unsubscribeIncident()
       window.removeEventListener("logs:view", handleLogsView)
     }
   }, [])

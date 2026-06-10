@@ -15,6 +15,7 @@ class ConnectionManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
         self.seen_incidents: set = set()
+        self.incident_cache: Dict[str, Dict] = {}
 
     async def connect(self, websocket: WebSocket):
         """
