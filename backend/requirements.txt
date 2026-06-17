@@ -61,3 +61,5 @@ urllib3==2.5.0
 uvicorn==0.47.0
 watchdog==6.0.0
 websocket-client==1.9.0
+redis==5.0.8
+rq==1.16.2
