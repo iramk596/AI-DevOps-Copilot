@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: ai-devops-backend
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: ai-devops-backend
+
+  template:
+    metadata:
+      labels:
+        app: ai-devops-backend
+
+    spec:
+      serviceAccountName: ai-devops-sa
+
+      containers:
+      - name: backend
+        image: iramkhan123/ai-devops-backend:v3
+
+        ports:
+        - containerPort: 8000
