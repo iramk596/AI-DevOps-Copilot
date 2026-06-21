@@ -1,5 +1,4 @@
 # AI-DevOps-Copilot
-# 🚀 AI DevOps Copilot
 
 ### AI-Powered Kubernetes Incident Intelligence Platform
 
