@@ -359,52 +359,62 @@ G --> L[React Dashboard]
 L --> M[End Users]
 ```
 
-# 🏆 Project Milestones
+# 🏆 Project Development Roadmap
 
-## Phase 1 — Foundation
+```mermaid
+timeline
+    title AI DevOps Copilot Development Journey
 
-- Architecture Design
-- Kubernetes Integration Planning
+    Phase 1 : Project Foundation & Architecture
+            : Architecture Design
+            : Cloud-Native Planning
+            : Kubernetes Strategy
 
-## Phase 2 — Backend Development
+    Phase 2 : Backend Development
+            : FastAPI APIs
+            : Incident Services
+            : Backend Architecture
 
-- FastAPI APIs
-- Kubernetes Client Integration
-- Incident Services
+    Phase 3 : Kubernetes Integration
+            : Kubernetes Client
+            : Cluster Monitoring APIs
+            : Resource Discovery
 
-## Phase 3 — Frontend Development
+    Phase 4 : Frontend Development
+            : React Dashboard
+            : Monitoring UI
+            : Incident Management
 
-- React Dashboard
-- Monitoring UI
-- Incident Management Interface
+    Phase 5 : Real-Time Monitoring
+            : WebSockets
+            : Live Event Streaming
+            : Dashboard Synchronization
 
-## Phase 4 — AI Integration
+    Phase 6 : AI Integration
+            : Ollama Integration
+            : Llama 3 Deployment
+            : AI Service Layer
 
-- Ollama Deployment
-- Llama 3 Integration
-- AI Incident Analysis
-- Root Cause Analysis
-- Intelligent Recommendations
+    Phase 7 : Incident Intelligence Engine
+            : Root Cause Analysis
+            : Incident Summarization
+            : AI Recommendations
 
-## Phase 5 — Real-Time Operations
+    Phase 8 : Observability Stack
+            : Prometheus
+            : Grafana
+            : Loki
 
-- WebSocket Integration
-- Live Event Streaming
-- Dashboard Synchronization
+    Phase 9 : Async Processing & Containerization
+            : Redis
+            : RQ Workers
+            : Docker & Docker Compose
 
-## Phase 5.2 — Observability
-
-- Prometheus Monitoring
-- Grafana Dashboards
-- Loki Log Aggregation
-
-## Phase 5.3 — Production Readiness
-
-- Redis Integration
-- RQ Workers
-- Dockerization
-- Docker Compose
-- AWS EKS Deployment
+    Phase 10 : Cloud Deployment & Production Readiness
+             : AWS EKS Deployment
+             : Kubernetes Workloads
+             : Production Validation
+```
 
 🎓 Skills Demonstrated
 Kubernetes Administration
