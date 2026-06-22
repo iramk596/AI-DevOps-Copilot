@@ -326,47 +326,38 @@ AI-DevOps-Copilot
 ├── README.md
 └── .github/
 ```└── README.md
-🚀 Deployment Pipeline
-## 🌐 Production Deployment Architecture
+🚀 Deployment PipelinE
+## 🚀 Deployment Pipeline
 
 ```mermaid
-flowchart TD
+flowchart LR
 
-A[End Users]
---> B[React Frontend]
+A[Developer]
+--> B[GitHub Repository]
 
-B --> C[FastAPI Backend]
+B --> C[Docker Build]
 
-C --> D[Kubernetes API]
+C --> D[Docker Images]
 
-C --> E[Redis]
+D --> E[Docker Hub]
 
-E --> F[RQ Workers]
+E --> F[Amazon EKS Cluster]
 
-F --> G[Ollama + Llama 3]
+F --> G[Frontend Deployment]
 
-D --> H[Amazon EKS]
+F --> H[Backend Deployment]
 
-H --> I[Pods]
+H --> I[Redis]
 
-H --> J[Deployments]
+H --> J[RQ Workers]
 
-H --> K[Services]
+H --> K[Ollama + Llama 3]
 
-H --> L[Nodes]
+G --> L[React Dashboard]
 
-H --> M[Namespaces]
-
-H --> N[Events]
-
-I --> O[Prometheus]
-
-O --> P[Grafana]
-
-I --> Q[Loki]
-
-Q --> P
+L --> M[End Users]
 ```
+
 🏆 Project Milestones
 Phase 1 — Foundation
 Architecture Design
