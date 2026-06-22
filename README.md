@@ -2,7 +2,7 @@
 .
 
 🚀 AI DevOps Copilot
-AI-Powered Kubernetes Incident Intelligence & Observability Platform
+### AI-Powered Kubernetes Incident Intelligence & Observability Platform
 
 AI DevOps Copilot is a cloud-native AIOps platform designed to enhance Kubernetes operations through real-time monitoring, intelligent incident analysis, and AI-assisted troubleshooting.
 
