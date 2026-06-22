@@ -311,11 +311,6 @@ H --> I
 ![Git](https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git)
 ![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github)
 
-<img width="2539" height="1304" alt="brave_screenshot_localhost (2)" src="https://github.com/user-attachments/assets/2da49e7a-d82c-4e4e-a21c-07dee0d8a7a3" />
-<img width="2540" height="1309" alt="brave_screenshot_localhost" src="https://github.com/user-attachments/assets/4eab5ff9-1e50-42ed-9bf5-1c236f035098" />
-<img width="2530" height="1305" alt="brave_screenshot_localhost (1)" src="https://github.com/user-attachments/assets/32b9ab9d-b2d9-4839-a759-3fc73237fcd6" />
-
-
 ## 📂 Project Structure
 
 ```text
