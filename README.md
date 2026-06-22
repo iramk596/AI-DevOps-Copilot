@@ -13,6 +13,8 @@
 [![Grafana](https://img.shields.io/badge/Visualization-Grafana-orange)]()
 
 AI DevOps Copilot is a cloud-native AIOps platform that combines Kubernetes observability, AI-powered incident analysis, real-time monitoring, and intelligent troubleshooting into a unified operational dashboard.
+
+AI DevOps Copilot is a cloud-native AIOps platform that combines Kubernetes observability, AI-powered incident analysis, real-time monitoring, and intelligent troubleshooting into a unified operational dashboard.
 🎯 Project Overview
 
 Modern Kubernetes environments generate a continuous stream of:
