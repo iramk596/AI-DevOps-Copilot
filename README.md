@@ -164,63 +164,77 @@ Insert Architecture Diagram Here
 
 ![Architecture Diagram](images/architecture.png)
 🧠 AI Incident Analysis Workflow
-Kubernetes Incident
-        │
-        ▼
-FastAPI Backend
-        │
-        ▼
-Cluster Context Collection
-        │
-        ▼
-Redis Queue
-        │
-        ▼
-RQ Worker
-        │
-        ▼
-Ollama + Llama 3
-        │
-        ▼
-AI Analysis
-        │
-        ├── Root Cause
-        ├── Summary
-        ├── Recommendations
-        └── Insights
-        │
-        ▼
-Dashboard
-📡 Real-Time Monitoring Workflow
-Kubernetes Cluster
-        │
-        ▼
-Monitoring Engine
-        │
-        ▼
-WebSocket Gateway
-        │
-        ▼
-Frontend Dashboard
-        │
-        ▼
-Live Updates
-🔍 Observability Workflow
-Kubernetes Workloads
-        │
-        ▼
-Prometheus
-        │
-        ▼
-Grafana Dashboards
+## 🧠 AI Incident Analysis Workflow
 
-Kubernetes Logs
-        │
-        ▼
-Loki
-        │
-        ▼
-Grafana Log Explorer
+```mermaid
+flowchart TD
+
+A[Kubernetes Incident]
+--> B[FastAPI Backend]
+
+B --> C[Cluster Context Collection]
+
+C --> D[Redis Queue]
+
+D --> E[RQ Worker]
+
+E --> F[Ollama + Llama 3]
+
+F --> G[AI Analysis]
+
+G --> H[Root Cause Analysis]
+G --> I[Incident Summary]
+G --> J[Recommendations]
+G --> K[Operational Insights]
+
+H --> L[Dashboard]
+I --> L
+J --> L
+K --> L
+```
+📡 Real-Time Monitoring Workflow
+## 📡 Real-Time Monitoring Workflow
+
+```mermaid
+flowchart TD
+
+A[Kubernetes Cluster]
+--> B[Monitoring Engine]
+
+B --> C[WebSocket Gateway]
+
+C --> D[React Dashboard]
+
+D --> E[Live Infrastructure Updates]
+
+E --> F[Pod Status Monitoring]
+E --> G[Node Health Monitoring]
+E --> H[Deployment Monitoring]
+E --> I[Incident Notifications]
+```
+🔍 Observability Workflow
+## 🔍 Observability Workflow
+
+```mermaid
+flowchart LR
+
+A[Kubernetes Pods & Nodes]
+--> B[Prometheus]
+
+B --> C[Metrics Collection]
+
+C --> D[Grafana Dashboards]
+
+E[Kubernetes Logs]
+--> F[Loki]
+
+F --> G[Log Aggregation]
+
+G --> H[Grafana Log Explorer]
+
+D --> I[Unified Observability Layer]
+H --> I
+```
 🏛️ Technology Stack
 Frontend
 React.js
