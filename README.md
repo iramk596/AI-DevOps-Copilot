@@ -163,7 +163,7 @@ This deployment architecture follows cloud-native best practices for scalability
 Insert Architecture Diagram Here
 
 ![Architecture Diagram](images/architecture.png)
-🧠 AI Incident Analysis Workflow
+
 ## 🧠 AI Incident Analysis Workflow
 
 ```mermaid
@@ -192,7 +192,7 @@ I --> L
 J --> L
 K --> L
 ```
-📡 Real-Time Monitoring Workflow
+
 ## 📡 Real-Time Monitoring Workflow
 
 ```mermaid
@@ -212,7 +212,7 @@ E --> G[Node Health Monitoring]
 E --> H[Deployment Monitoring]
 E --> I[Incident Notifications]
 ```
-🔍 Observability Workflow
+
 ## 🔍 Observability Workflow
 
 ```mermaid
@@ -235,43 +235,50 @@ G --> H[Grafana Log Explorer]
 D --> I[Unified Observability Layer]
 H --> I
 ```
-🏛️ Technology Stack
-Frontend
-React.js
-Vite
-Tailwind CSS
-Axios
-WebSockets
-Backend
-FastAPI
-Python
-Uvicorn
-AI & Intelligence
-Ollama
-Llama 3
-Async Processing
-Redis
-Redis Queue (RQ)
-Background Workers
-Monitoring & Observability
-Prometheus
-Grafana
-Loki
-Containerization
-Docker
-Docker Compose
-Orchestration
-Kubernetes
-Amazon EKS
-Cloud Platform
-AWS
-VPC
-IAM
-Application Load Balancer
-Version Control
-Git
-GitHub
+## 🛠️ Technology Stack
 
+### Frontend
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css)
+![Axios](https://img.shields.io/badge/Axios-5A29E4?style=for-the-badge&logo=axios)
+
+### Backend
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi)
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python)
+![Uvicorn](https://img.shields.io/badge/Uvicorn-ASGI_Server-success?style=for-the-badge)
+
+### AI & Intelligence
+![Ollama](https://img.shields.io/badge/Ollama-000000?style=for-the-badge)
+![Llama3](https://img.shields.io/badge/Llama_3-Meta_AI-blue?style=for-the-badge)
+
+### Real-Time Communication
+![WebSocket](https://img.shields.io/badge/WebSocket-Real_Time-orange?style=for-the-badge)
+
+### Async Processing
+![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis)
+![RQ](https://img.shields.io/badge/RQ_Workers-Background_Jobs-red?style=for-the-badge)
+
+### Monitoring & Observability
+![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=prometheus)
+![Grafana](https://img.shields.io/badge/Grafana-F46800?style=for-the-badge&logo=grafana)
+![Loki](https://img.shields.io/badge/Loki-Log_Aggregation-yellow?style=for-the-badge)
+
+### Containerization
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker)
+![Docker Compose](https://img.shields.io/badge/Docker_Compose-2496ED?style=for-the-badge)
+
+### Cloud & Orchestration
+![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=for-the-badge&logo=kubernetes)
+![Amazon EKS](https://img.shields.io/badge/Amazon_EKS-FF9900?style=for-the-badge&logo=amazon-aws)
+![AWS](https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazonaws)
+![IAM](https://img.shields.io/badge/IAM-Security-orange?style=for-the-badge)
+![VPC](https://img.shields.io/badge/VPC-Networking-blue?style=for-the-badge)
+![ALB](https://img.shields.io/badge/Application_Load_Balancer-FF9900?style=for-the-badge)
+
+### Version Control
+![Git](https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git)
+![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github)
 ## 📂 Project Structure
 
 ```text
