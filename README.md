@@ -1,150 +1,166 @@
 # AI-DevOps-Copilot
+.
 
-### AI-Powered Kubernetes Incident Intelligence Platform
+AI DevOps Copilot
+AI-Powered Kubernetes Incident Intelligence & Observability Platform
 
-AI DevOps Copilot is a cloud-native AIOps platform designed to help DevOps engineers monitor, analyze, and troubleshoot Kubernetes environments using Artificial Intelligence.
+AI DevOps Copilot is a cloud-native AIOps platform designed to enhance Kubernetes operations through real-time monitoring, intelligent incident analysis, and AI-assisted troubleshooting.
 
-The platform combines Kubernetes monitoring, real-time observability, WebSocket-based live updates, AI-powered incident analysis, and cloud-native deployment practices to create an intelligent operational dashboard for modern infrastructure teams.
+The platform combines Kubernetes observability, live infrastructure monitoring, asynchronous incident processing, AI-powered root cause analysis, and cloud-native deployment practices into a unified operational dashboard.
 
-Unlike traditional monitoring tools that only provide metrics and alerts, AI DevOps Copilot leverages **Ollama and Llama 3** to transform raw Kubernetes events into meaningful operational insights, root cause analysis, and remediation recommendations.
+Unlike traditional monitoring solutions that only surface metrics and logs, AI DevOps Copilot leverages Ollama and Llama 3 to transform Kubernetes telemetry into actionable operational intelligence, enabling DevOps engineers to detect issues faster, understand incidents more effectively, and accelerate remediation workflows.
 
----
+Project Overview
 
-## 🎯 Project Vision
+Modern Kubernetes environments generate a continuous stream of:
 
-Modern Kubernetes environments generate thousands of events, logs, metrics, and alerts every day.
+Cluster Events
+Pod Status Changes
+Infrastructure Metrics
+Application Logs
+Resource Utilization Data
+Operational Alerts
 
-DevOps engineers often spend significant time:
+Analyzing and correlating this information manually is both time-consuming and error-prone.
 
-* Investigating incidents
-* Correlating logs and events
-* Understanding root causes
-* Monitoring cluster health
-* Managing operational complexity
+AI DevOps Copilot addresses this challenge by combining:
 
-AI DevOps Copilot was built to bridge the gap between traditional observability and intelligent operational decision-making by introducing AI-driven incident intelligence into Kubernetes workflows.
+Kubernetes Monitoring
+AI-Powered Incident Intelligence
+Real-Time Event Streaming
+Observability Engineering
+Cloud-Native Deployment
 
----
+to create an intelligent operational assistant for DevOps teams.
 
-# 🏗️ Architecture
-
-> Insert Architecture Diagram Here
-
-```markdown
-![Architecture Diagram](images/architecture.png)
-```
-
----
-
-# ⚡ Key Features
-
-## 🤖 AI-Powered Incident Intelligence
+✨ Key Features
+🤖 AI-Powered Incident Intelligence
 
 Powered by:
 
-* Ollama
-* Llama 3
+Ollama
+Llama 3
 
-The platform analyzes Kubernetes incidents and generates:
+Capabilities:
 
-* Root Cause Analysis
-* Incident Summaries
-* Operational Insights
-* Remediation Suggestions
-* Troubleshooting Recommendations
+Root Cause Analysis
+Incident Summarization
+Intelligent Recommendations
+Infrastructure Insights
+Context-Aware Troubleshooting
+☸ Kubernetes Monitoring
 
----
+Monitor Kubernetes resources in real time:
 
-## ☸ Kubernetes Monitoring
+Pods
+Nodes
+Deployments
+Services
+Namespaces
+ReplicaSets
+Events
 
-Monitor and analyze:
+Provides continuous visibility into cluster health and workload status.
 
-* Pods
-* Nodes
-* Deployments
-* Services
-* Namespaces
-* ReplicaSets
-* Cluster Events
+📡 Real-Time WebSocket Monitoring
 
-Real-time cluster visibility enables engineers to understand infrastructure state instantly.
+Implemented a WebSocket-based communication layer to provide:
 
----
+Live Incident Updates
+Real-Time Cluster Events
+Instant Dashboard Synchronization
+Continuous Infrastructure Visibility
 
-## 📡 Real-Time WebSocket Updates
+This enables engineers to observe operational changes as they happen.
 
-Implemented a WebSocket-based communication layer for:
+⚡ Asynchronous Incident Processing
 
-* Live incident updates
-* Real-time cluster events
-* Dashboard synchronization
-* Instant infrastructure visibility
+Built using:
 
-This eliminates the need for constant polling and provides near real-time operational awareness.
+Redis
+RQ (Redis Queue)
 
----
+Responsibilities:
 
-## 📊 Observability Stack
-
-Integrated monitoring using:
-
-### Prometheus
-
-Collects:
-
-* Cluster Metrics
-* Node Metrics
-* Pod Metrics
-* Resource Utilization
-* Application Health Metrics
-
-### Grafana
-
-Visualizes:
-
-* Cluster Health
-* Resource Consumption
-* Incident Trends
-* Application Performance
-* Infrastructure Monitoring
-
----
-
-## 🐳 Containerized Microservices
-
-All services are fully containerized using Docker.
-
-Containers include:
-
-* Frontend Container
-* Backend Container
-* Ollama Container
+Background Incident Processing
+AI Analysis Requests
+Event Queue Management
+Scalable Workload Distribution
 
 Benefits:
 
-* Environment Consistency
-* Portability
-* Scalability
-* Simplified Deployments
+Improved Performance
+Reduced API Latency
+Faster Dashboard Response Times
+Better Scalability
+📊 Observability Platform
+Prometheus
 
----
+Collects:
 
-## ☁️ Cloud-Native Deployment
+Cluster Metrics
+Node Metrics
+Pod Metrics
+Resource Utilization Metrics
+Application Health Metrics
+Grafana
 
-The platform is designed and deployed using modern cloud-native principles.
+Provides:
 
-Deployment Environment:
+Infrastructure Dashboards
+Resource Monitoring
+Cluster Health Visualization
+Incident Analytics
+Loki
 
-* Amazon EKS
-* Kubernetes
-* Docker
-* AWS Networking Components
+Provides centralized log aggregation:
 
----
+Kubernetes Logs
+Application Logs
+Pod-Level Visibility
+Operational Troubleshooting
 
-# 🧠 AI Incident Analysis Workflow
+Together, Prometheus, Grafana, and Loki provide a complete observability stack.
 
-```text
+🐳 Containerized Architecture
+
+All platform services are containerized using Docker.
+
+Containers:
+
+Frontend Service
+Backend Service
+Ollama Service
+Redis Service
+RQ Worker Services
+
+Benefits:
+
+Portability
+Consistency
+Scalability
+Simplified Deployment
+☁️ AWS EKS Deployment
+
+The platform is deployed using Amazon Elastic Kubernetes Service (EKS).
+
+Infrastructure Components:
+
+Amazon EKS
+Amazon VPC
+Security Groups
+IAM Roles
+Application Load Balancer
+Kubernetes Worker Nodes
+
+This deployment architecture follows cloud-native best practices for scalability and reliability.
+
+🏗️ System Architecture
+
+Insert Architecture Diagram Here
+
+![Architecture Diagram](images/architecture.png)
+🧠 AI Incident Analysis Workflow
 Kubernetes Incident
         │
         ▼
@@ -152,6 +168,12 @@ FastAPI Backend
         │
         ▼
 Cluster Context Collection
+        │
+        ▼
+Redis Queue
+        │
+        ▼
+RQ Worker
         │
         ▼
 Ollama + Llama 3
@@ -165,18 +187,12 @@ AI Analysis
         └── Insights
         │
         ▼
-Frontend Dashboard
-```
-
----
-
-# 🔄 Real-Time Monitoring Workflow
-
-```text
+Dashboard
+📡 Real-Time Monitoring Workflow
 Kubernetes Cluster
         │
         ▼
-Backend Monitoring Engine
+Monitoring Engine
         │
         ▼
 WebSocket Gateway
@@ -186,67 +202,59 @@ Frontend Dashboard
         │
         ▼
 Live Updates
-```
+🔍 Observability Workflow
+Kubernetes Workloads
+        │
+        ▼
+Prometheus
+        │
+        ▼
+Grafana Dashboards
 
----
-
-# 🏛️ Technology Stack
-
-## Frontend
-
-* React.js
-* Vite
-* Tailwind CSS
-* Axios
-* WebSockets
-
-## Backend
-
-* FastAPI
-* Python
-* Uvicorn
-
-## AI Layer
-
-* Ollama
-* Llama 3
-
-## Kubernetes
-
-* Kubernetes API
-* Deployments
-* Services
-* Pods
-* Namespaces
-
-## Monitoring
-
-* Prometheus
-* Grafana
-
-## Containerization
-
-* Docker
-* Docker Compose
-
-## Cloud Platform
-
-* AWS
-* Amazon EKS
-* VPC
-* Security Groups
-* IAM
-
-## Version Control
-
-* Git
-* GitHub
-
----
-
-# 📁 Project Structure
-
-```text
+Kubernetes Logs
+        │
+        ▼
+Loki
+        │
+        ▼
+Grafana Log Explorer
+🏛️ Technology Stack
+Frontend
+React.js
+Vite
+Tailwind CSS
+Axios
+WebSockets
+Backend
+FastAPI
+Python
+Uvicorn
+AI & Intelligence
+Ollama
+Llama 3
+Async Processing
+Redis
+Redis Queue (RQ)
+Background Workers
+Monitoring & Observability
+Prometheus
+Grafana
+Loki
+Containerization
+Docker
+Docker Compose
+Orchestration
+Kubernetes
+Amazon EKS
+Cloud Platform
+AWS
+VPC
+IAM
+Application Load Balancer
+Version Control
+Git
+GitHub
+📂 Project Structure
 AI-DevOps-Copilot
 │
 ├── backend/
@@ -265,7 +273,7 @@ AI-DevOps-Copilot
 │   ├── deployments/
 │   ├── services/
 │   ├── monitoring/
-│   └── manifests
+│   └── manifests/
 │
 ├── monitoring/
 │
@@ -275,14 +283,10 @@ AI-DevOps-Copilot
 │
 ├── images/
 │
-└── docker-compose.yml
-```
-
----
-
-# 🚀 Deployment Architecture
-
-```text
+├── docker-compose.yml
+│
+└── README.md
+🚀 Deployment Pipeline
 Developer
      │
      ▼
@@ -299,122 +303,74 @@ Amazon EKS
      │
      ▼
 Running Kubernetes Workloads
-```
+🏆 Project Milestones
+Phase 1 — Foundation
+Architecture Design
+Kubernetes Integration Planning
+Phase 2 — Backend Development
+FastAPI APIs
+Kubernetes Client Integration
+Incident Services
+Phase 3 — Frontend Development
+React Dashboard
+Monitoring UI
+Incident Management Interface
+Phase 4 — AI Integration
+Ollama Deployment
+Llama 3 Integration
+AI Incident Analysis
+Root Cause Generation
+Phase 5 — Real-Time Operations
+WebSocket Integration
+Live Event Streaming
+Dashboard Synchronization
+Phase 5.2 — Observability
+Prometheus Monitoring
+Grafana Dashboards
+Loki Logging
+Phase 5.3 — Production Readiness
+Redis Integration
+RQ Workers
+Dockerization
+Docker Compose
+AWS EKS Deployment
+🎓 Skills Demonstrated
+Kubernetes Administration
+Amazon EKS
+Docker
+FastAPI
+React
+WebSockets
+Redis
+RQ Workers
+Prometheus
+Grafana
+Loki
+Observability Engineering
+Cloud-Native Architecture
+AIOps
+LLM Integration
+Ollama
+Llama 3
+Incident Management
+Infrastructure Monitoring
+DevOps Practices
+🔮 Future Enhancements
+GitHub Actions CI/CD
+Automated Remediation
+Multi-Cluster Monitoring
+Slack Integration
+Microsoft Teams Integration
+Alertmanager Integration
+Predictive Incident Detection
+RBAC Support
+AI Agents for Automated Operations
+👩‍💻 Author
 
----
-
-# 📈 Monitoring & Observability
-
-The platform integrates Prometheus and Grafana to provide complete observability.
-
-Capabilities include:
-
-* Infrastructure Monitoring
-* Cluster Health Monitoring
-* Resource Tracking
-* Incident Analytics
-* Performance Monitoring
-
----
-
-# 🏆 Major Achievements
-
-### Phase 1 – Foundation
-
-* Project Architecture Planning
-* Technology Stack Selection
-* Initial Kubernetes Integration
-
-### Phase 2 – Backend Development
-
-* FastAPI APIs
-* Kubernetes Client Integration
-* Incident Processing Services
-
-### Phase 3 – Frontend Development
-
-* React Dashboard
-* Cluster Visualization
-* Incident Management UI
-
-### Phase 4 – AI Integration
-
-* Ollama Setup
-* Llama 3 Integration
-* AI Incident Analysis
-* Root Cause Generation
-
-### Phase 5 – Real-Time Operations
-
-* WebSocket Integration
-* Live Monitoring
-* Dashboard Synchronization
-
-### Phase 5.2 – Observability
-
-* Prometheus Installation
-* Grafana Dashboards
-* Metrics Collection
-
-### Phase 5.3 – Containerization & Cloud
-
-* Dockerization
-* Docker Compose
-* Amazon EKS Deployment
-* Production Architecture
-
----
-
-# 🎓 Skills Demonstrated
-
-This project demonstrates practical experience with:
-
-* Kubernetes
-* Amazon EKS
-* Docker
-* FastAPI
-* React
-* WebSockets
-* Prometheus
-* Grafana
-* Observability Engineering
-* Cloud-Native Architecture
-* Infrastructure Monitoring
-* AIOps
-* LLM Integration
-* Ollama
-* Llama 3
-* DevOps Practices
-
----
-
-# 🔮 Future Roadmap
-
-* GitHub Actions CI/CD
-* Automated Remediation
-* Multi-Cluster Monitoring
-* Slack Integration
-* Microsoft Teams Integration
-* Alertmanager Integration
-* Predictive Incident Detection
-* RBAC Support
-* Advanced AI Agents
-
----
-
-# 👩‍💻 Author
-
-## Iram Khan
-
+Iram Khan
 B.Tech – Computer Science & Engineering (Cloud Computing & Automation)
-
 VIT Bhopal University
 
-### Connect
+GitHub: https://github.com/iramk596
 
-* GitHub: https://github.com/iramk596
-* LinkedIn: Add Your LinkedIn Profile
-
----
-
-## ⭐ If you found this project useful, consider giving it a star on GitHub.
+⭐ If you found this project useful, consider giving it a star on GitHub.
