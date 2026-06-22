@@ -272,6 +272,9 @@ Version Control
 Git
 GitHub
 📂 Project Structure
+## 📂 Project Structure
+
+```text
 AI-DevOps-Copilot
 │
 ├── backend/
@@ -279,47 +282,91 @@ AI-DevOps-Copilot
 │   ├── services/
 │   ├── routes/
 │   ├── models/
+│   ├── worker.py
+│   ├── requirements.txt
 │   └── Dockerfile
 │
 ├── frontend/
 │   ├── src/
 │   ├── public/
+│   ├── package.json
 │   └── Dockerfile
 │
 ├── kubernetes/
 │   ├── deployments/
+│   │   ├── backend-deployment.yaml
+│   │   └── frontend-deployment.yaml
+│   │
 │   ├── services/
+│   │   ├── backend-service.yaml
+│   │   └── frontend-service.yaml
+│   │
 │   ├── monitoring/
-│   └── manifests/
+│   │   ├── prometheus.yaml
+│   │   └── grafana.yaml
+│   │
+│   └── ingress.yaml
 │
 ├── monitoring/
+│   ├── prometheus/
+│   ├── grafana/
+│   └── loki/
 │
 ├── terraform/
 │
 ├── docs/
 │
 ├── images/
+│   ├── architecture-diagram.png
+│   ├── dashboard.png
+│   ├── grafana-dashboard.png
+│   └── eks-deployment.png
 │
 ├── docker-compose.yml
-│
-└── README.md
+├── README.md
+└── .github/
+```└── README.md
 🚀 Deployment Pipeline
-Developer
-     │
-     ▼
-GitHub Repository
-     │
-     ▼
-Docker Build
-     │
-     ▼
-Docker Images
-     │
-     ▼
-Amazon EKS
-     │
-     ▼
-Running Kubernetes Workloads
+## 🌐 Production Deployment Architecture
+
+```mermaid
+flowchart TD
+
+A[End Users]
+--> B[React Frontend]
+
+B --> C[FastAPI Backend]
+
+C --> D[Kubernetes API]
+
+C --> E[Redis]
+
+E --> F[RQ Workers]
+
+F --> G[Ollama + Llama 3]
+
+D --> H[Amazon EKS]
+
+H --> I[Pods]
+
+H --> J[Deployments]
+
+H --> K[Services]
+
+H --> L[Nodes]
+
+H --> M[Namespaces]
+
+H --> N[Events]
+
+I --> O[Prometheus]
+
+O --> P[Grafana]
+
+I --> Q[Loki]
+
+Q --> P
+```
 🏆 Project Milestones
 Phase 1 — Foundation
 Architecture Design
