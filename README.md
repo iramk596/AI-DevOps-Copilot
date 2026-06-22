@@ -327,7 +327,7 @@ AI-DevOps-Copilot
 └── .github/
 ```└── README.md
 
-🚀 Deployment PipelinE
+
 ## 🚀 Deployment Pipeline
 
 ```mermaid
@@ -390,6 +390,8 @@ RQ Workers
 Dockerization
 Docker Compose
 AWS EKS Deployment
+
+
 🎓 Skills Demonstrated
 Kubernetes Administration
 Amazon EKS
@@ -411,23 +413,94 @@ Llama 3
 Incident Management
 Infrastructure Monitoring
 DevOps Practices
-🔮 Future Enhancements
-GitHub Actions CI/CD
-Automated Remediation
-Multi-Cluster Monitoring
-Slack Integration
-Microsoft Teams Integration
-Alertmanager Integration
-Predictive Incident Detection
-RBAC Support
-AI Agents for Automated Operations
-👩‍💻 Author
+Deployment
+🎓 Skills Demonstrated
 
-Iram Khan
-B.Tech – Computer Science & Engineering (Cloud Computing & Automation)
+Instead of a giant paragraph:
+
+# 🎓 Skills Demonstrated
+
+### Cloud & DevOps
+
+- AWS
+- Amazon EKS
+- Docker
+- Kubernetes
+- kubectl
+- eksctl
+
+### Backend Engineering
+
+- FastAPI
+- Python
+- REST APIs
+- WebSockets
+
+### Frontend Development
+
+- React
+- Vite
+- Tailwind CSS
+
+### AI & LLM Engineering
+
+- Ollama
+- Llama 3
+- Prompt Engineering
+- AI Incident Analysis
+
+### Monitoring & Observability
+
+- Prometheus
+- Grafana
+- Loki
+
+### Distributed Systems
+
+- Redis
+- RQ Workers
+- Asynchronous Processing
+
+### Platform Engineering
+
+- Incident Management
+- Infrastructure Monitoring
+- Root Cause Analysis
+- Observability Engineering
+🔮 Future Enhancements
+# 🔮 Future Enhancements
+
+- CI/CD using GitHub Actions
+- Automated Incident Remediation
+- Multi-Cluster Kubernetes Monitoring
+- Slack Integration
+- Microsoft Teams Integration
+- Alertmanager Integration
+- Predictive Incident Detection
+- AI Agent Workflows
+- RBAC & Multi-Tenant Support
+👩‍💻 Author
+# 👩‍💻 Author
+
+**Iram Khan**
+
+B.Tech – Computer Science & Engineering  
+Specialization: Cloud Computing & Automation  
 VIT Bhopal University
 
-GitHub: https://github.com/iramk596
+### Connect With Me
 
-⭐ If you found this project useful, consider giving it a star on GitHub.
+- GitHub: https://github.com/iramk596
+- LinkedIn: YOUR_LINKEDIN_URL
 
+---
+⭐ Support
+# ⭐ Support
+
+If you found this project useful:
+
+- ⭐ Star the repository
+- 🍴 Fork the project
+- 📢 Share it with your network
+
+Your support helps improve and expand the platform.
