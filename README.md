@@ -285,7 +285,8 @@ H --> I
 
 <img width="2530" height="1305" alt="brave_screenshot_localhost (1)" src="https://github.com/user-attachments/assets/078acaf2-db48-47dd-a40a-29db4c67960c" />
 <img width="2539" height="1304" alt="brave_screenshot_localhost (2)" src="https://github.com/user-attachments/assets/ab761ea4-d583-4aed-bff9-19a543a7fb28" />
-![Uploading brave_screenshot_localhost.png…]()
+<img width="2540" height="1309" alt="brave_screenshot_localhost" src="https://github.com/user-attachments/assets/29c8f0e3-7755-4be9-9a63-8f07aed1ce90" />
+
 
 ## 📂 Project Structure
 
