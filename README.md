@@ -155,3 +155,69 @@ Application Load Balancer
 Kubernetes Worker Nodes
 
 This deployment architecture follows cloud-native best practices for scalability and reliability.
+
+.
+
+🏗️ System Architecture
+
+Insert Architecture Diagram Here
+
+![Architecture Diagram](images/architecture.png)
+🧠 AI Incident Analysis Workflow
+Kubernetes Incident
+        │
+        ▼
+FastAPI Backend
+        │
+        ▼
+Cluster Context Collection
+        │
+        ▼
+Redis Queue
+        │
+        ▼
+RQ Worker
+        │
+        ▼
+Ollama + Llama 3
+        │
+        ▼
+AI Analysis
+        │
+        ├── Root Cause
+        ├── Summary
+        ├── Recommendations
+        └── Insights
+        │
+        ▼
+Dashboard
+📡 Real-Time Monitoring Workflow
+Kubernetes Cluster
+        │
+        ▼
+Monitoring Engine
+        │
+        ▼
+WebSocket Gateway
+        │
+        ▼
+Frontend Dashboard
+        │
+        ▼
+Live Updates
+🔍 Observability Workflow
+Kubernetes Workloads
+        │
+        ▼
+Prometheus
+        │
+        ▼
+Grafana Dashboards
+
+Kubernetes Logs
+        │
+        ▼
+Loki
+        │
+        ▼
+Grafana Log Explorer
