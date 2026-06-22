@@ -140,3 +140,18 @@ Portability
 Consistency
 Scalability
 Simplified Deployment
+
+☁️ AWS EKS Deployment
+
+The platform is deployed using Amazon Elastic Kubernetes Service (EKS).
+
+Infrastructure Components:
+
+Amazon EKS
+Amazon VPC
+Security Groups
+IAM Roles
+Application Load Balancer
+Kubernetes Worker Nodes
+
+This deployment architecture follows cloud-native best practices for scalability and reliability.
