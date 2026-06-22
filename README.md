@@ -245,6 +245,13 @@ H --> I
 ![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite)
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css)
 ![Axios](https://img.shields.io/badge/Axios-5A29E4?style=for-the-badge&logo=axios)
+<img width="2540" height="1309" alt="brave_screenshot_localhost" src="https://github.com/user-attachments/assets/9380316b-e643-4b15-939a-dda72c64f19f" />
+
+<img width="2530" height="1305" alt="brave_screenshot_localhost (1)" src="https://github.com/user-attachments/assets/b442a145-6dc0-44ee-a491-de60f0bebaf0" />
+
+<img width="2539" height="1304" alt="brave_screenshot_localhost (2)" src="https://github.com/user-attachments/assets/a60c64df-d7e2-4e83-bcf5-84f6189d7c6d" />
+
+
 
 ### Backend
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi)
