@@ -156,6 +156,14 @@ Kubernetes Worker Nodes
 
 This deployment architecture follows cloud-native best practices for scalability and reliability.
 
+.
+
+🏗️ System Architecture
+
+Insert Architecture Diagram Here
+
+![Architecture Diagram](images/architecture.png)
+🧠 AI Incident Analysis Workflow
 Kubernetes Incident
         │
         ▼
@@ -183,3 +191,190 @@ AI Analysis
         │
         ▼
 Dashboard
+📡 Real-Time Monitoring Workflow
+Kubernetes Cluster
+        │
+        ▼
+Monitoring Engine
+        │
+        ▼
+WebSocket Gateway
+        │
+        ▼
+Frontend Dashboard
+        │
+        ▼
+Live Updates
+🔍 Observability Workflow
+Kubernetes Workloads
+        │
+        ▼
+Prometheus
+        │
+        ▼
+Grafana Dashboards
+
+Kubernetes Logs
+        │
+        ▼
+Loki
+        │
+        ▼
+Grafana Log Explorer
+🏛️ Technology Stack
+Frontend
+React.js
+Vite
+Tailwind CSS
+Axios
+WebSockets
+Backend
+FastAPI
+Python
+Uvicorn
+AI & Intelligence
+Ollama
+Llama 3
+Async Processing
+Redis
+Redis Queue (RQ)
+Background Workers
+Monitoring & Observability
+Prometheus
+Grafana
+Loki
+Containerization
+Docker
+Docker Compose
+Orchestration
+Kubernetes
+Amazon EKS
+Cloud Platform
+AWS
+VPC
+IAM
+Application Load Balancer
+Version Control
+Git
+GitHub
+📂 Project Structure
+AI-DevOps-Copilot
+│
+├── backend/
+│   ├── app/
+│   ├── services/
+│   ├── routes/
+│   ├── models/
+│   └── Dockerfile
+│
+├── frontend/
+│   ├── src/
+│   ├── public/
+│   └── Dockerfile
+│
+├── kubernetes/
+│   ├── deployments/
+│   ├── services/
+│   ├── monitoring/
+│   └── manifests/
+│
+├── monitoring/
+│
+├── terraform/
+│
+├── docs/
+│
+├── images/
+│
+├── docker-compose.yml
+│
+└── README.md
+🚀 Deployment Pipeline
+Developer
+     │
+     ▼
+GitHub Repository
+     │
+     ▼
+Docker Build
+     │
+     ▼
+Docker Images
+     │
+     ▼
+Amazon EKS
+     │
+     ▼
+Running Kubernetes Workloads
+🏆 Project Milestones
+Phase 1 — Foundation
+Architecture Design
+Kubernetes Integration Planning
+Phase 2 — Backend Development
+FastAPI APIs
+Kubernetes Client Integration
+Incident Services
+Phase 3 — Frontend Development
+React Dashboard
+Monitoring UI
+Incident Management Interface
+Phase 4 — AI Integration
+Ollama Deployment
+Llama 3 Integration
+AI Incident Analysis
+Root Cause Generation
+Phase 5 — Real-Time Operations
+WebSocket Integration
+Live Event Streaming
+Dashboard Synchronization
+Phase 5.2 — Observability
+Prometheus Monitoring
+Grafana Dashboards
+Loki Logging
+Phase 5.3 — Production Readiness
+Redis Integration
+RQ Workers
+Dockerization
+Docker Compose
+AWS EKS Deployment
+🎓 Skills Demonstrated
+Kubernetes Administration
+Amazon EKS
+Docker
+FastAPI
+React
+WebSockets
+Redis
+RQ Workers
+Prometheus
+Grafana
+Loki
+Observability Engineering
+Cloud-Native Architecture
+AIOps
+LLM Integration
+Ollama
+Llama 3
+Incident Management
+Infrastructure Monitoring
+DevOps Practices
+🔮 Future Enhancements
+GitHub Actions CI/CD
+Automated Remediation
+Multi-Cluster Monitoring
+Slack Integration
+Microsoft Teams Integration
+Alertmanager Integration
+Predictive Incident Detection
+RBAC Support
+AI Agents for Automated Operations
+👩‍💻 Author
+
+Iram Khan
+B.Tech – Computer Science & Engineering (Cloud Computing & Automation)
+VIT Bhopal University
+
+GitHub: https://github.com/iramk596
+
+⭐ If you found this project useful, consider giving it a star on GitHub.
+
