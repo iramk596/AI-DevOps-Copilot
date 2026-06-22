@@ -282,6 +282,11 @@ H --> I
 ### Version Control
 ![Git](https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git)
 ![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github)
+
+<img width="2530" height="1305" alt="brave_screenshot_localhost (1)" src="https://github.com/user-attachments/assets/078acaf2-db48-47dd-a40a-29db4c67960c" />
+<img width="2539" height="1304" alt="brave_screenshot_localhost (2)" src="https://github.com/user-attachments/assets/ab761ea4-d583-4aed-bff9-19a543a7fb28" />
+![Uploading brave_screenshot_localhost.png…]()
+
 ## 📂 Project Structure
 
 ```text
