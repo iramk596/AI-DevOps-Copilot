@@ -1,15 +1,18 @@
 # AI-DevOps-Copilot
 .
 
-🚀 AI DevOps Copilot
-### AI-Powered Kubernetes Incident Intelligence & Observability Platform
+# 🚀 AI DevOps Copilot
 
-AI DevOps Copilot is a cloud-native AIOps platform designed to enhance Kubernetes operations through real-time monitoring, intelligent incident analysis, and AI-assisted troubleshooting.
+> AI-Powered Kubernetes Incident Intelligence & Observability Platform
 
-The platform combines Kubernetes observability, live infrastructure monitoring, asynchronous incident processing, AI-powered root cause analysis, and cloud-native deployment practices into a unified operational dashboard.
+[![React](https://img.shields.io/badge/Frontend-React-blue)]()
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-green)]()
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-EKS-326CE5)]()
+[![Ollama](https://img.shields.io/badge/LLM-Llama%203-orange)]()
+[![Prometheus](https://img.shields.io/badge/Monitoring-Prometheus-red)]()
+[![Grafana](https://img.shields.io/badge/Visualization-Grafana-orange)]()
 
-Unlike traditional monitoring solutions that only surface metrics and logs, AI DevOps Copilot leverages Ollama and Llama 3 to transform Kubernetes telemetry into actionable operational intelligence, enabling DevOps engineers to detect issues faster, understand incidents more effectively, and accelerate remediation workflows.
-
+AI DevOps Copilot is a cloud-native AIOps platform that combines Kubernetes observability, AI-powered incident analysis, real-time monitoring, and intelligent troubleshooting into a unified operational dashboard.
 🎯 Project Overview
 
 Modern Kubernetes environments generate a continuous stream of:
