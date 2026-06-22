@@ -257,13 +257,25 @@ H --> I
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python)
 ![Uvicorn](https://img.shields.io/badge/Uvicorn-ASGI_Server-success?style=for-the-badge)
+<img width="2542" height="1300" alt="brave_screenshot" src="https://github.com/user-attachments/assets/e713f67f-c518-4979-855a-3fa309225f06" />
+
+<img width="2551" height="1303" alt="brave_screenshot (1)" src="https://github.com/user-attachments/assets/d53fa95a-82fc-41a4-bcfb-f46cfebab52a" />
+
 
 ### AI & Intelligence
 ![Ollama](https://img.shields.io/badge/Ollama-000000?style=for-the-badge)
 ![Llama3](https://img.shields.io/badge/Llama_3-Meta_AI-blue?style=for-the-badge)
+<img width="2537" height="1307" alt="brave_screenshot_localhost (2)" src="https://github.com/user-attachments/assets/0eeebbca-0837-4bb5-b6b9-efd9a3d2149d" />
+
+<img width="2540" height="1306" alt="brave_screenshot_localhost" src="https://github.com/user-attachments/assets/eb77fe2b-e986-4ff1-b17a-2dd2019694ca" />
 
 ### Real-Time Communication
 ![WebSocket](https://img.shields.io/badge/WebSocket-Real_Time-orange?style=for-the-badge)
+<img width="2544" height="1306" alt="brave_screenshot_localhost (3)" src="https://github.com/user-attachments/assets/fca17eec-3610-437e-a0f6-4b46cf2977de" />
+
+<img width="2543" height="1307" alt="brave_screenshot_localhost" src="https://github.com/user-attachments/assets/27caee1c-4772-4b01-b8b4-a9223e4cdfad" />
+
+<img width="2541" height="1305" alt="brave_screenshot_localhost (1)" src="https://github.com/user-attachments/assets/b756162f-7cf8-41eb-989f-81b69ed2a895" />
 
 ### Async Processing
 ![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis)
