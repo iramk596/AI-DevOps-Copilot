@@ -271,7 +271,7 @@ Application Load Balancer
 Version Control
 Git
 GitHub
-📂 Project Structure
+
 ## 📂 Project Structure
 
 ```text
@@ -415,31 +415,6 @@ timeline
              : Production Validation
 ```
 
-🎓 Skills Demonstrated
-Kubernetes Administration
-Amazon EKS
-Docker
-FastAPI
-React
-WebSockets
-Redis
-RQ Workers
-Prometheus
-Grafana
-Loki
-Observability Engineering
-Cloud-Native Architecture
-AIOps
-LLM Integration
-Ollama
-Llama 3
-Incident Management
-Infrastructure Monitoring
-DevOps Practices
-Deployment
-🎓 Skills Demonstrated
-
-Instead of a giant paragraph:
 
 # 🎓 Skills Demonstrated
 
@@ -502,7 +477,7 @@ Instead of a giant paragraph:
 - Predictive Incident Detection
 - AI Agent Workflows
 - RBAC & Multi-Tenant Support
-👩‍💻 Author
+
 # 👩‍💻 Author
 
 **Iram Khan**
@@ -514,10 +489,10 @@ VIT Bhopal University
 ### Connect With Me
 
 - GitHub: https://github.com/iramk596
-- LinkedIn: YOUR_LINKEDIN_URL
+- LinkedIn: 
 
 ---
-⭐ Support
+
 # ⭐ Support
 
 If you found this project useful:
