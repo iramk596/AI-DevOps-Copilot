@@ -285,10 +285,15 @@ H --> I
 ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=prometheus)
 ![Grafana](https://img.shields.io/badge/Grafana-F46800?style=for-the-badge&logo=grafana)
 ![Loki](https://img.shields.io/badge/Loki-Log_Aggregation-yellow?style=for-the-badge)
+<img width="2552" height="1296" alt="brave_screenshot_localhost" src="https://github.com/user-attachments/assets/88aa6467-7b4a-4518-9da1-251d7dce857d" />
+
+<img width="2559" height="1295" alt="brave_screenshot_localhost (1)" src="https://github.com/user-attachments/assets/7789ec52-5a2e-4d55-8517-1ea0512ed603" />
 
 ### Containerization
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker)
 ![Docker Compose](https://img.shields.io/badge/Docker_Compose-2496ED?style=for-the-badge)
+<img width="2552" height="1309" alt="Screenshot 2026-06-17 171628" src="https://github.com/user-attachments/assets/c7ce4f56-f09f-4ea6-9d5a-946940c79e6a" />
+
 
 ### Cloud & Orchestration
 ![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=for-the-badge&logo=kubernetes)
@@ -297,6 +302,10 @@ H --> I
 ![IAM](https://img.shields.io/badge/IAM-Security-orange?style=for-the-badge)
 ![VPC](https://img.shields.io/badge/VPC-Networking-blue?style=for-the-badge)
 ![ALB](https://img.shields.io/badge/Application_Load_Balancer-FF9900?style=for-the-badge)
+<img width="2548" height="1391" alt="Screenshot 2026-06-17 160102" src="https://github.com/user-attachments/assets/e75da7c4-8679-4ee4-8714-5bbe1868dd7f" />
+
+<img width="2559" height="1345" alt="Screenshot 2026-06-20 213217" src="https://github.com/user-attachments/assets/b32191a7-64f6-43ea-9d3d-e65d3081e421" />
+
 
 ### Version Control
 ![Git](https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git)
