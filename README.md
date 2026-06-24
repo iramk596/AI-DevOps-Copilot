@@ -216,7 +216,6 @@ E --> G[Node Health Monitoring]
 E --> H[Deployment Monitoring]
 E --> I[Incident Notifications]
 ```
-<img width="1009" height="1165" alt="unnamed (1)" src="https://github.com/user-attachments/assets/ce70cdb0-bca4-4808-9b04-6e0bddba8254" />
 
 ## 🔍 Observability Workflow
 
@@ -240,6 +239,8 @@ G --> H[Grafana Log Explorer]
 D --> I[Unified Observability Layer]
 H --> I
 ```
+<img width="1380" height="1018" alt="unnamed (2)" src="https://github.com/user-attachments/assets/2724edc9-e50b-46c4-aca9-66d2911ec200" />
+
 ## 🛠️ Technology Stack
 
 ### Frontend
