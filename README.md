@@ -163,9 +163,8 @@ This deployment architecture follows cloud-native best practices for scalability
 
 🏗️ System Architecture
 
-Insert Architecture Diagram Here
+<img width="1485" height="1041" alt="unnamed (3)" src="https://github.com/user-attachments/assets/f0b8cb6f-781b-4888-85bd-aa5b6e1a1d24" />
 
-![Architecture Diagram](images/architecture.png)
 
 ## 🧠 AI Incident Analysis Workflow
 
