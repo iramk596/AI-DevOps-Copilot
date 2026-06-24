@@ -194,6 +194,8 @@ I --> L
 J --> L
 K --> L
 ```
+<img width="1009" height="1165" alt="unnamed (1)" src="https://github.com/user-attachments/assets/7b13a3ec-3e06-4679-960f-86efcbc24cc6" />
+
 
 ## 📡 Real-Time Monitoring Workflow
 
@@ -214,6 +216,7 @@ E --> G[Node Health Monitoring]
 E --> H[Deployment Monitoring]
 E --> I[Incident Notifications]
 ```
+<img width="1009" height="1165" alt="unnamed (1)" src="https://github.com/user-attachments/assets/ce70cdb0-bca4-4808-9b04-6e0bddba8254" />
 
 ## 🔍 Observability Workflow
 
