@@ -1,10 +1,16 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { AuthProvider } from "react-oidc-context";
 
-createRoot(document.getElementById('root')).render(
+import "./index.css";
+
+import App from "./App";
+import { cognitoAuthConfig } from "./authConfig";
+
+createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <App />
-  </StrictMode>,
-)
+    <AuthProvider {...cognitoAuthConfig}>
+      <App />
+    </AuthProvider>
+  </StrictMode>
+);

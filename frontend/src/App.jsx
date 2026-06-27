@@ -1,9 +1,12 @@
-import Dashboard from './pages/Dashboard'
+import Dashboard from "./pages/Dashboard";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
-
-  return <Dashboard />
-
+  return (
+    <ProtectedRoute>
+      <Dashboard />
+    </ProtectedRoute>
+  );
 }
 
-export default App
+export default App;

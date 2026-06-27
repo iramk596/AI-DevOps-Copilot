@@ -1,27 +1,47 @@
 from kubernetes import client, config, watch
 from kubernetes.config.config_exception import ConfigException
 
-# Proper Kubernetes config loading
+# ---------------------------------------------------
+# Kubernetes Configuration
+# ---------------------------------------------------
+
+KUBERNETES_AVAILABLE = False
 
 try:
-
     config.load_kube_config()
+    KUBERNETES_AVAILABLE = True
+    print("Loaded local kubeconfig")
 
 except ConfigException:
+    try:
+        config.load_incluster_config()
+        KUBERNETES_AVAILABLE = True
+        print("Loaded in-cluster Kubernetes config")
 
-    config.load_incluster_config()
+    except ConfigException:
+        print("Kubernetes configuration not found. Running without Kubernetes.")
+        KUBERNETES_AVAILABLE = False
 
+
+# ---------------------------------------------------
+# Client
+# ---------------------------------------------------
 
 def get_k8s_client():
-
-    """
-    Create fresh Kubernetes client
-    """
+    if not KUBERNETES_AVAILABLE:
+        return None
 
     return client.CoreV1Api()
 
 
+# ---------------------------------------------------
+# Pods
+# ---------------------------------------------------
+
 def get_all_pods(namespace=None):
+
+    if not KUBERNETES_AVAILABLE:
+        return []
 
     v1 = get_k8s_client()
 
@@ -33,7 +53,6 @@ def get_all_pods(namespace=None):
     pod_list = []
 
     for pod in pods.items:
-
         pod_list.append({
             "name": pod.metadata.name,
             "namespace": pod.metadata.namespace,
@@ -43,29 +62,39 @@ def get_all_pods(namespace=None):
     return pod_list
 
 
+# ---------------------------------------------------
+# Logs
+# ---------------------------------------------------
+
 def get_pod_logs(namespace, pod_name, tail_lines=50):
+
+    if not KUBERNETES_AVAILABLE:
+        return "Kubernetes unavailable"
 
     v1 = get_k8s_client()
 
     try:
-        logs = v1.read_namespaced_pod_log(
+        return v1.read_namespaced_pod_log(
             name=pod_name,
             namespace=namespace,
             tail_lines=tail_lines,
             previous=True
         )
 
-        return logs
-
     except Exception as e:
-
         return str(e)
 
 
+# ---------------------------------------------------
+# Live Log Streaming
+# ---------------------------------------------------
+
 def stream_pod_logs(namespace, pod_name, tail_lines=10):
-    """
-    Generator that yields pod logs line-by-line using Kubernetes watch stream.
-    """
+
+    if not KUBERNETES_AVAILABLE:
+        yield "Kubernetes unavailable"
+        return
+
     v1 = get_k8s_client()
     w = watch.Watch()
 
@@ -77,12 +106,10 @@ def stream_pod_logs(namespace, pod_name, tail_lines=10):
             tail_lines=tail_lines,
             follow=True,
         ):
-            # watch yields strings (lines)
             yield line
 
     except Exception as e:
-        # propagate as string to caller
-        yield f"__STREAM_ERROR__:{str(e)}"
+        yield f"__STREAM_ERROR__:{e}"
 
     finally:
         try:
@@ -91,73 +118,90 @@ def stream_pod_logs(namespace, pod_name, tail_lines=10):
             pass
 
 
+# ---------------------------------------------------
+# Metrics
+# ---------------------------------------------------
+
 def get_cluster_metrics():
-    """
-    Query metrics.k8s.io for pod metrics and aggregate cluster CPU and memory usage.
-    Returns dict with 'cpu_millicores' and 'memory_bytes' and sample counts.
-    """
-    api = client.CustomObjectsApi()
 
     metrics = {
-        'cpu_millicores': 0,
-        'memory_bytes': 0,
-        'pod_count': 0
+        "cpu_millicores": 0,
+        "memory_bytes": 0,
+        "pod_count": 0
     }
 
-    try:
-        # list pod metrics across all namespaces
-        res = api.list_cluster_custom_object(group="metrics.k8s.io", version="v1beta1", plural="pods")
+    if not KUBERNETES_AVAILABLE:
+        return metrics
 
-        items = res.get('items', []) if isinstance(res, dict) else []
+    api = client.CustomObjectsApi()
+
+    try:
+
+        res = api.list_cluster_custom_object(
+            group="metrics.k8s.io",
+            version="v1beta1",
+            plural="pods"
+        )
+
+        items = res.get("items", [])
 
         for pod in items:
-            # pod.metrics has containers with usage fields
-            containers = pod.get('containers', [])
-            for c in containers:
-                usage = c.get('usage', {})
-                cpu = usage.get('cpu')
-                mem = usage.get('memory')
 
-                # cpu may be in n or m format (e.g., '123456n' or '50m')
+            metrics["pod_count"] += 1
+
+            for c in pod.get("containers", []):
+
+                usage = c.get("usage", {})
+
+                cpu = usage.get("cpu")
+                mem = usage.get("memory")
+
                 if cpu:
+
                     try:
-                        if cpu.endswith('n'):
-                            # nanocores -> millicores
-                            millicores = int(cpu[:-1]) / 1e6
-                        elif cpu.endswith('m'):
-                            millicores = float(cpu[:-1])
+
+                        if cpu.endswith("n"):
+                            metrics["cpu_millicores"] += int(cpu[:-1]) / 1_000_000
+
+                        elif cpu.endswith("m"):
+                            metrics["cpu_millicores"] += float(cpu[:-1])
+
                         else:
-                            # assume cores
-                            millicores = float(cpu) * 1000
-                        metrics['cpu_millicores'] += millicores
-                    except Exception:
+                            metrics["cpu_millicores"] += float(cpu) * 1000
+
+                    except:
                         pass
 
                 if mem:
+
                     try:
-                        # memory formats like '123456Ki', '123Mi', '1234' (bytes)
-                        if mem.endswith('Ki'):
-                            bytes_val = int(float(mem[:-2]) * 1024)
-                        elif mem.endswith('Mi'):
-                            bytes_val = int(float(mem[:-2]) * 1024 * 1024)
-                        elif mem.endswith('Gi'):
-                            bytes_val = int(float(mem[:-2]) * 1024 * 1024 * 1024)
-                        else:
-                            bytes_val = int(mem)
-                        metrics['memory_bytes'] += bytes_val
-                    except Exception:
+
+                        if mem.endswith("Ki"):
+                            metrics["memory_bytes"] += int(float(mem[:-2]) * 1024)
+
+                        elif mem.endswith("Mi"):
+                            metrics["memory_bytes"] += int(float(mem[:-2]) * 1024 * 1024)
+
+                        elif mem.endswith("Gi"):
+                            metrics["memory_bytes"] += int(float(mem[:-2]) * 1024 * 1024 * 1024)
+
+                    except:
                         pass
 
-            metrics['pod_count'] += 1
-
     except Exception:
-        # metrics API may not be available; return zeros
-        return metrics
+        pass
 
     return metrics
 
 
+# ---------------------------------------------------
+# Incident Analysis
+# ---------------------------------------------------
+
 def analyze_cluster_issues(namespace=None):
+
+    if not KUBERNETES_AVAILABLE:
+        return []
 
     v1 = get_k8s_client()
 
@@ -183,19 +227,15 @@ def analyze_cluster_issues(namespace=None):
 
             reason = None
 
-            # Waiting state
             if container.state.waiting:
                 reason = container.state.waiting.reason
 
-            # Terminated state
             elif container.state.terminated:
                 reason = container.state.terminated.reason or "Error"
 
-            # Detect failed pod phase
             if pod_phase == "Failed":
                 reason = "Failed"
 
-            # Detect unhealthy pods
             if reason in [
                 "CrashLoopBackOff",
                 "Error",
@@ -216,33 +256,23 @@ def analyze_cluster_issues(namespace=None):
                 log_text = logs.lower()
 
                 if "exit" in log_text:
-
                     possible_reason = "Application exited unexpectedly"
-
                     suggestion = "Check application startup logic"
 
                 elif "error" in log_text:
-
                     possible_reason = "Application runtime error"
-
-                    suggestion = "Inspect stack trace in logs"
+                    suggestion = "Inspect stack trace"
 
                 elif "failed" in log_text:
-
                     possible_reason = "Application failed during startup"
-
                     suggestion = "Check startup configuration"
 
                 elif "connection refused" in log_text:
-
-                    possible_reason = "Service dependency unavailable"
-
-                    suggestion = "Check database/service connectivity"
+                    possible_reason = "Dependency unavailable"
+                    suggestion = "Check service connectivity"
 
                 elif "oomkilled" in log_text:
-
-                    possible_reason = "Container ran out of memory"
-
+                    possible_reason = "Out of memory"
                     suggestion = "Increase memory limits"
 
                 issues.append({

@@ -42,18 +42,24 @@ def home():
 @app.on_event("startup")
 async def startup_event():
     logger.info("AI DevOps Copilot Backend Starting Up")
-    # start background monitoring task
+
     async def monitor_clusters():
         while True:
             try:
-                pods = get_all_pods()
-                issues = analyze_cluster_issues()
+                try:
+                    pods = get_all_pods()
+                    issues = analyze_cluster_issues()
+                except Exception as e:
+                    logger.warning(f"Kubernetes unavailable: {e}")
+                    pods = []
+                    issues = []
 
                 failed = sum(1 for p in pods if p.get("status") != "Running")
                 running = sum(1 for p in pods if p.get("status") == "Running")
                 incident_count = len(issues)
 
                 cluster_health = "degraded" if failed > 0 else "healthy"
+
 
                 # Attach minimal AI analysis for new incidents asynchronously
                 for issue in issues:
